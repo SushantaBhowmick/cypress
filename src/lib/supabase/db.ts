@@ -6,8 +6,8 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 dotenv.config({path:'.env'})
 
 
-if(!process.env.DATABASE_URL){
-    console.log(`Cant find DB url`)
+if (!process.env.DATABASE_URL) {
+  throw new Error('❌ DATABASE_URL not found in environment variables.');
 }
 
 const client = postgres(process.env.DATABASE_URL as string,{max:1})
@@ -15,6 +15,7 @@ const db = drizzle(client,{schema})
 
 const migrateDb= async()=>{
     try {
+      console.log(process.env.DATABASE_URL)
             console.log('🟠 Migrating client');
             await migrate(db, { migrationsFolder: 'migrations' });
             console.log('🟢 Successfully Migrated');
