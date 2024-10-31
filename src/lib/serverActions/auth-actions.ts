@@ -49,12 +49,17 @@ export async function actionSignUpUser({
     .eq("email", email);
 
   if (data?.length) return { error: { message: "User already exists", data } };
-  const response = await supabase.auth.signUp({
+
+  const { error }= await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}api/auth/callback`,
     },
   });
-  return response
+
+  if(error){
+    return{error:{message:error.message}}
+  }
+  return { success: true, user: { email } };
 }
