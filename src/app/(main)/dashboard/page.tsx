@@ -15,6 +15,7 @@ const DashboardPage = async () => {
   } = await supabase.auth.getUser();
 
   if (!user) return;
+
   const {data:subscription,error:subscriptionError} = await getUserSubscriptionStatus(user.id)
 
   if(subscriptionError) return;
@@ -23,7 +24,8 @@ const DashboardPage = async () => {
   const workspace = await db.query.workspaces.findFirst({
     where: (workspace, { eq }) => eq(workspace.workspaceOwner, user.id),
   });
-  console.log("yup",workspace)
+
+
   if (!workspace)
     return (
       <div className="bg-background h-screen w-screen flex justify-center items-center">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Logo from "../../../public/cypresslogo.svg";
 import {
   NavigationMenu,
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import {Session} from '@supabase/supabase-js'
 
 const routes = [
   { title: "Features", href: "#features" },
@@ -64,7 +66,23 @@ const components: { title: string; href: string; description: string }[] = [
 ];
 
 const Header = () => {
+
   const [path, setPath] = useState("#products");
+  const [session, setSession] = useState<Session | null>(null);
+  const supabase = createClientComponentClient()
+  const [error, setError] = useState<Error |null>(null);
+
+  useEffect(()=>{
+    async function fetchSession(){
+      const {data:{session},error}= await supabase.auth.getSession();
+      if (error) {
+        setError(error);
+      } else {
+        setSession(session);
+      }
+    }
+    fetchSession()
+  },[supabase])
   return (
     <header className="flex justify-center items-center p-4">
       <Link href={"/"} className="w-full flex gap-2 justify-start items-center">
@@ -184,17 +202,36 @@ const Header = () => {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
+              <Link href={"/about"} legacyBehavior passHref>
           <NavigationMenuLink
               className={cn(navigationMenuTriggerStyle(), {
-                'dark:text-white': path === '#testimonials',
-                'dark:text-white/40': path !== '#testimonials',
+                'dark:text-white': path === '#about',
+                'dark:text-white/40': path !== '#about',
                 'font-normal': true,
                 'text-xl': true,
               })}
             >
-              Testimonial
+              About
             </NavigationMenuLink>
+              </Link>
           </NavigationMenuItem>
+          {
+            session && 
+            <NavigationMenuItem>
+             <Link href={"/dashboard"} legacyBehavior passHref>
+          <NavigationMenuLink
+              className={cn(navigationMenuTriggerStyle(), {
+                'dark:text-white': path === '#dashboard',
+                'dark:text-white/40': path !== '#dashboard',
+                'font-normal': true,
+                'text-xl': true,
+              })}
+            >
+              Dashboard
+            </NavigationMenuLink>
+             </Link>
+          </NavigationMenuItem>
+          }
         </NavigationMenuList>
       </NavigationMenu>
       <aside
