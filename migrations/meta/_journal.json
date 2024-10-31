@@ -22,6 +22,20 @@
       "when": 1730143726368,
       "tag": "0002_modern_zaladane",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1730230388917,
+      "tag": "0003_ambiguous_dark_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1730231468886,
+      "tag": "0004_cold_zarek",
+      "breakpoints": true
     }
   ]
 }

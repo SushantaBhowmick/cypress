@@ -8,9 +8,9 @@ import {
   workspaces,
   folders,
   users,
-  collaborators,
 } from "../../../migrations/schema";
 import { and, eq, notExists } from "drizzle-orm";
+import { collaborators } from "./schema";
 
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
@@ -143,3 +143,9 @@ export const getSharedWorkspaces = async (userId: string) => {
     
     return sharedWorkspaces;
 };
+
+
+export const getAllUsers=async()=>{
+  const user = await db.select().from(users)
+  return user;
+}

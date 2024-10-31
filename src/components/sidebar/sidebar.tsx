@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -10,6 +11,7 @@ import {
 } from "@/lib/supabase/queries";
 import { redirect } from "next/navigation";
 import { twMerge } from "tailwind-merge";
+import WorkspaceDropdown from "./workspace-dorpdown";
 
 interface SidebarProps {
   params: { workspaceId: string };
@@ -53,7 +55,18 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
         className
       )}
     >
-        
+      <div>
+        <WorkspaceDropdown
+          privateWorkspaces={privateWorkspaces}
+          sharedWorkspaces={sharedWorkspaces}
+          collaboratingWorkspaces={collaboratingWorkspaces}
+          defaultValue={[
+            ...privateWorkspaces,
+            ...sharedWorkspaces,
+            ...collaboratingWorkspaces,
+          ].find((workspace)=>workspace.id===params.workspaceId)}
+        ></WorkspaceDropdown>
+      </div>
     </aside>
   );
 };

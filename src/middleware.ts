@@ -22,18 +22,16 @@ export async function middleware(req: NextRequest) {
   ) {
     return NextResponse.redirect(
       new URL(
-        `   =${req.nextUrl.searchParams.get(
-          "error_description"
-        )}`,
+        `   =${req.nextUrl.searchParams.get("error_description")}`,
         req.url
       )
     );
   }
 
-  if(['/login','/signup'].includes(req.nextUrl.pathname)){
-    console.log('running')
-    if(session){
-        return NextResponse.redirect(new URL('/dashboard',req.url))
+  if (["/login", "/signup"].includes(req.nextUrl.pathname)) {
+    if (session) {
+      console.log("running");
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
   return res;

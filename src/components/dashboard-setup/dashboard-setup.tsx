@@ -34,8 +34,8 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   subscription,
   user,
 }) => {
-
-
+console.log("gotit")
+console.log("user",user)
   const [selectedEmoji, setSelectedEmoji] = useState("💼");
   const supabase = createClientComponentClient();
   const {dispatch} = useAppState();

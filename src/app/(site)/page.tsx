@@ -13,8 +13,22 @@ import clsx from "clsx";
 import CustomCard from "@/components/landing-page/custom-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { getAllUsers } from "@/lib/supabase/queries";
 
-const HomePage = () => {
+const HomePage = async() => {
+
+  // const supabase = createServerComponentClient({cookies})
+
+  // const {data:{user}} = await supabase.auth.getUser()
+  // console.log(user)
+
+  // console.log("home page");
+  // const users = await getAllUsers()
+  // console.log(users)
+
+
   return (
     <>
       <section className=" overflow-hidden px-4 sm:px-6 mt-10  sm:flex sm:flex-col gap-4 md:justify-center md:items-center">
