@@ -25,6 +25,7 @@ const DashboardPage = async () => {
     where: (workspace, { eq }) => eq(workspace.workspaceOwner, user.id),
   });
 
+  console.log("Workspace",workspace)
 
   if (!workspace)
     return (

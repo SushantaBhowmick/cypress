@@ -19,9 +19,9 @@ body{
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
-}
+} */
 
-@layer base {
+/* @layer base {
   :root {
     --background:0 0% 100%;
     --foreground:222.2 84% 4.9%;
@@ -75,8 +75,9 @@ body{
     --chart-4:280 65% 60%;
     --chart-5:340 75% 55%
   }
-} */
+}  */
  
+
 
 @layer base {
   * {
@@ -162,3 +163,17 @@ body{
 }
 
 
+.ql-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 8px;
+  background-color: #1e1350; /* or add it to the track */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000;
+}
