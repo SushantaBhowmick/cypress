@@ -256,7 +256,7 @@ const appReducer = (
                 if (folder.id === action.payload.folderId) {
                   return {
                     ...folder,
-                    files: folder.files.filter((file) => {
+                    files: folder.files.map((file) => {
                       if (file.id === action.payload.fileId) {
                         return {
                           ...file,

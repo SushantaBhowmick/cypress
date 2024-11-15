@@ -153,18 +153,57 @@ export const addCollaborators = async (users: User[], workspaceId: string) => {
   });
 };
 
-export const createFolder = async (folder:Folder) => {
+export const createFolder = async (folder: Folder) => {
   try {
-  const results = await db.insert(folders).values(folder)
-    return {data:null,error:null}
+    const results = await db.insert(folders).values(folder);
+    return { data: null, error: null };
   } catch (error) {
-    console.log(error)
-    return {data:null,error:'Error'}
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const createFile = async (file: File) => {
+  try {
+    await db.insert(files).values(file);
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateFolder = async (
+  folder: Partial<Folder>,
+  folderId: string
+) => {
+  try {
+    await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateFile = async (file: Partial<File>, fileId: string) => {
+  try {
+    const response = await db
+      .update(files)
+      .set(file)
+      .where(eq(files.id, fileId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
   }
 };
 
 export const getUsersFromSearch = async (email: string) => {
- if(!email)return [];
- const accounts =db.select().from(users).where(ilike(users.email,`${email}%`));
- return accounts;
+  if (!email) return [];
+  const accounts = db
+    .select()
+    .from(users)
+    .where(ilike(users.email, `${email}%`));
+  return accounts;
 };
