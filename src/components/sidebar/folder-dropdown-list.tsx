@@ -9,6 +9,7 @@ import { v4 } from "uuid";
 import { useToast } from "@/hooks/use-toast";
 import { createFolder } from "@/lib/supabase/queries";
 import { Accordion } from "../ui/accordion";
+import Dropdown from "./Dropdown";
 
 interface FoldersDropdownListProps {
   workspaceFolders: Folder[];
@@ -113,9 +114,13 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
           folders.filter((folder)=>!folder.inTrash)
           .map((f)=>(
 
-            <div key={f.id}>
-
-            </div>
+            <Dropdown 
+            key={f.id}
+            title={f.title}
+            listType="folder"
+            id={f.id}
+            iconId={f.iconId}
+            />
           ))
         }
       </Accordion>
