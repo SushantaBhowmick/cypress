@@ -9,6 +9,7 @@ export async function actionLoginUser({
   email,
   password,
 }: z.infer<typeof FormSchema>) {
+  console.log()
   const supabase = createRouteHandlerClient({ cookies });
   const response = await supabase.auth.signInWithPassword({
     email,
@@ -43,12 +44,12 @@ export async function actionSignUpUser({
   password,
 }: z.infer<typeof FormSchema>) {
   const supabase = createRouteHandlerClient({ cookies });
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", email);
+  // const { data } = await supabase
+  //   .from("profiles")
+  //   .select("*")
+  //   .eq("email", email);
 
-  if (data?.length) return { error: { message: "User already exists", data } };
+  // if (data?.length) return { error: { message: "User already exists", data } };
 
   const { error }= await supabase.auth.signUp({
     email,
