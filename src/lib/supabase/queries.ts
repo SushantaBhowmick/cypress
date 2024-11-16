@@ -30,11 +30,28 @@ export const createWorkspace = async (workspace: workspace) => {
     return { data: null, error: "Error" };
   }
 };
+export const getWorkspaceDetails = async (workspaceId: string) => {
+  const isValid = validate(workspaceId);
+  if (!isValid) {
+    return { data: [], error: "Error" };
+  }
+  try {
+    const response = (await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1)) as workspace[];
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: "Error" };
+  }
+};
 
 export const deleteWorkspace = async (workspaceId: string) => {
-  if(!workspaceId) return;
+  if (!workspaceId) return;
   try {
-    await db.delete(workspaces).where(eq(workspaces.id,workspaceId));
+    await db.delete(workspaces).where(eq(workspaces.id, workspaceId));
   } catch (error) {
     console.log(error);
     return { data: null, error: "Error" };
