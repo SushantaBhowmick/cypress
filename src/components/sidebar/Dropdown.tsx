@@ -99,24 +99,25 @@ const Dropdown: React.FC<DropdownProps> = ({
     }
     if (fId.length === 2 && fId[1]) {
       if (!fileTitle) return;
-      const {data,error} = await updateFile({title:fileTitle},fId[1]);
-      if(error){
+      const { data, error } = await updateFile({ title: fileTitle }, fId[1]);
+      if (error) {
         toast({
-            title: 'Error',
-            variant: 'destructive',
-            description: 'Could not update the title for this file',
-          });
-      }else{
+          title: "Error",
+          variant: "destructive",
+          description: "Could not update the title for this file",
+        });
+      } else {
         toast({
-            title: 'Success',
-            description: 'File title changed.',
-          });
+          title: "Success",
+          description: "File title changed.",
+        });
       }
     }
   };
 
   //onchanges
   const onChangeEmoji = async (selectedEmoji: string) => {
+    const pathId = id.split("folder");
     if (!workspaceId) return;
     if (listType === "folder") {
       dispatch({
@@ -137,7 +138,32 @@ const Dropdown: React.FC<DropdownProps> = ({
       } else {
         toast({
           title: "Success",
-          description: "UPdate emoji for the folder",
+          description: "Update emoji for the folder",
+        });
+      }
+    }
+    if(listType==='file'){
+      dispatch({
+        type:'UPDATE_FILE',
+        payload:{
+          file:{iconId:selectedEmoji},
+          folderId:pathId[0],
+          workspaceId,
+          fileId:pathId[1],
+        }
+      })
+
+      const { data, error } = await updateFile({ iconId: selectedEmoji }, pathId[1]);
+      if (error) {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Could not update the emoji for this file",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Update emoji for the file",
         });
       }
     }
@@ -159,18 +185,18 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   const fileTitleChange = (e: any) => {
-    if(!folderId || !workspaceId) return;
+    if (!folderId || !workspaceId) return;
     const fId = id.split("folder");
     if (fId.length === 2 && fId[1]) {
-        dispatch({
-          type: "UPDATE_FILE",
-          payload: {
-            file: { title: e.target.value },
-            folderId,
-            workspaceId,
-            fileId: fId[1],
-          },
-        });
+      dispatch({
+        type: "UPDATE_FILE",
+        payload: {
+          file: { title: e.target.value },
+          folderId,
+          workspaceId,
+          fileId: fId[1],
+        },
+      });
     }
   };
 
@@ -361,7 +387,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       <AccordionContent>
         {state.workspaces
           .find((workspace) => workspace.id === workspaceId)
-          ?.folders.find((folder)=>folder.id=== id)
+          ?.folders.find((folder) => folder.id === id)
           ?.files.filter((file) => !file.inTrash)
           .map((file) => {
             const customFileId = `${id}folder${file.id}`;
