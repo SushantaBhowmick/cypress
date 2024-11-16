@@ -6,6 +6,7 @@ import { Subscription, workspace, File, Folder, User } from "./supabase-types";
 import { files, workspaces, folders, users } from "../../../migrations/schema";
 import { and, eq, ilike, notExists } from "drizzle-orm";
 import { collaborators } from "./schema";
+import { revalidatePath } from "next/cache";
 
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
@@ -24,6 +25,16 @@ export const createWorkspace = async (workspace: workspace) => {
   try {
     const response = await db.insert(workspaces).values(workspace);
     return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const deleteWorkspace = async (workspaceId: string) => {
+  if(!workspaceId) return;
+  try {
+    await db.delete(workspaces).where(eq(workspaces.id,workspaceId));
   } catch (error) {
     console.log(error);
     return { data: null, error: "Error" };
@@ -153,6 +164,27 @@ export const addCollaborators = async (users: User[], workspaceId: string) => {
   });
 };
 
+export const removeCollaborators = async (
+  users: User[],
+  workspaceId: string
+) => {
+  const response = users.forEach(async (user: User) => {
+    const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) =>
+        and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+    });
+    if (userExists)
+      await db
+        .delete(collaborators)
+        .where(
+          and(
+            eq(collaborators.workspaceId, workspaceId),
+            eq(collaborators.userId, user.id)
+          )
+        );
+  });
+};
+
 export const createFolder = async (folder: Folder) => {
   try {
     const results = await db.insert(folders).values(folder);
@@ -192,6 +224,23 @@ export const updateFile = async (file: Partial<File>, fileId: string) => {
       .update(files)
       .set(file)
       .where(eq(files.id, fileId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateWorkspace = async (
+  workspace: Partial<workspace>,
+  workspaceId: string
+) => {
+  try {
+    await db
+      .update(workspaces)
+      .set(workspace)
+      .where(eq(workspaces.id, workspaceId));
+    revalidatePath(`/dashboard/${workspaceId}`);
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
