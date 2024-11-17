@@ -6,7 +6,6 @@ import { Subscription, workspace, File, Folder, User } from "./supabase-types";
 import { files, workspaces, folders, users } from "../../../migrations/schema";
 import { and, eq, ilike, notExists } from "drizzle-orm";
 import { collaborators } from "./schema";
-import { revalidatePath } from "next/cache";
 
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
@@ -81,7 +80,6 @@ export const getFolderDetails = async (folderId: string) => {
     return { data: [], error: "Error" };
   }
 };
-
 
 export const deleteWorkspace = async (workspaceId: string) => {
   if (!workspaceId) return;
@@ -302,12 +300,30 @@ export const updateWorkspace = async (
       .update(workspaces)
       .set(workspace)
       .where(eq(workspaces.id, workspaceId));
-    revalidatePath(`/dashboard/${workspaceId}`);
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
     return { data: null, error: "Error" };
   }
+};
+
+export const getCollaborators = async (workspaceId: string) => {
+  const response = await db
+    .select()
+    .from(collaborators)
+    .where(eq(collaborators.workspaceId, workspaceId));
+
+  if (!response.length) return [];
+  const userInformation: Promise<User | undefined>[] = response.map(
+    async (user) => {
+      const exists = await db.query.users.findFirst({
+        where: (u, { eq }) => eq(u.id, user.userId),
+      });
+      return exists;
+    }
+  );
+  const resolveUsers = await Promise.all(userInformation);
+  return resolveUsers.filter(Boolean) as User[];
 };
 
 export const getUsersFromSearch = async (email: string) => {

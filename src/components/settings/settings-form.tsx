@@ -13,6 +13,7 @@ import { Input } from "../ui/input";
 import {
   addCollaborators,
   deleteWorkspace,
+  getCollaborators,
   removeCollaborators,
   updateWorkspace,
 } from "@/lib/supabase/queries";
@@ -30,6 +31,7 @@ import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Alert, AlertDescription } from "../ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 
 const SettingsForm = () => {
   const { toast } = useToast();
@@ -108,16 +110,46 @@ const SettingsForm = () => {
     }
   };
 
+  const onClickAlertConfirm = async () => {
+    if (!workspaceId) return;
+    if (collaborators.length > 0) {
+      await removeCollaborators(collaborators, workspaceId);
+    }
+    setPermissions("private");
+    setOpenAlertMessage(false);
+  };
+
+  const onPermissionsChange = (val: string) => {
+    if (val === "private") {
+      setOpenAlertMessage(true);
+    } else setPermissions(val);
+  };
+
   //onclicks
   //fetching avatars details
   //get workspace details
   //get all the collaborators
   //wip payment portal redirect
 
-  useEffect(()=>{
-    const showingWorkspace = state.workspaces.find((workspace)=>workspace.id===workspaceId)
-    if(showingWorkspace) setWorkspaceDetails(showingWorkspace)
-  },[workspaceId,state])
+  useEffect(() => {
+    const showingWorkspace = state.workspaces.find(
+      (workspace) => workspace.id === workspaceId
+    );
+    if (showingWorkspace) setWorkspaceDetails(showingWorkspace);
+  }, [workspaceId, state]);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    const fetchCollaborators = async () => {
+      const response = await getCollaborators(workspaceId);
+      console.log(response);
+      if (response.length) {
+        setPermissions("shared");
+        setCollaborators(response);
+      }
+    };
+    fetchCollaborators();
+  }, [workspaceId]);
 
   return (
     <div className="flex gap-4 flex-col">
@@ -155,75 +187,72 @@ const SettingsForm = () => {
         />
         {/* WIP subscription */}
       </div>
+      <>
+        <Label htmlFor="permissions">Permisssions</Label>
+        <Select onValueChange={onPermissionsChange} value={permissions}>
+          <SelectTrigger className="w-full h-26 -mt-3">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="private">
+                <div className="flex p-2 gap-4 justify-center items-center">
+                  <Lock />
+                  <article className="flex flex-col text-left">
+                    <span>Private</span>
+                    <p>
+                      {" "}
+                      Your workspace isprivate to you.You can choose to share it
+                      later.
+                    </p>
+                  </article>
+                </div>
+              </SelectItem>
+              <SelectItem value="shared">
+                <div className="flex p-2 gap-4 justify-center items-center">
+                  <Share />
+                  <article className="flex flex-col text-left">
+                    <span>Shared</span>
+                    <span>You can invite collaborators.</span>
+                  </article>
+                </div>
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
 
-      <Label htmlFor="permissions">Permisssions</Label>
-      <Select
-        onValueChange={(e) => setPermissions(e)}
-        defaultValue={permissions}
-      >
-        <SelectTrigger className="w-full h-26 -mt-3">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="private">
-              <div className="flex p-2 gap-4 justify-center items-center">
-                <Lock />
-                <article className="flex flex-col text-left">
-                  <span>Private</span>
-                  <p>
-                    {" "}
-                    Your workspace isprivate to you.You can choose to share it
-                    later.
-                  </p>
-                </article>
-              </div>
-            </SelectItem>
-            <SelectItem value="shared">
-              <div className="flex p-2 gap-4 justify-center items-center">
-                <Share />
-                <article className="flex flex-col text-left">
-                  <span>Shared</span>
-                  <span>You can invite collaborators.</span>
-                </article>
-              </div>
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      {permissions === "shared" && (
-        <div>
-          <CollaboratorSearch
-            existingCollaborators={collaborators}
-            getCollaborator={(user) => addCollaborator(user)}
-          >
-            <Button className="text-sm mt-4" type="button">
-              <Plus />
-              Add Collaborators
-            </Button>
-          </CollaboratorSearch>
-          <div className="mt-4">
-            <span className="text-sm text-muted-foreground">
-              Collaborators {collaborators.length || ""}
-            </span>
-            <ScrollArea className="h-[120px] overflow-y-auto w-full rounded-md border border-muted-foreground/20">
-              {collaborators.length ? (
-                collaborators.map((c) => (
-                  <div
-                    className="p-4 flex
+        {permissions === "shared" && (
+          <div>
+            <CollaboratorSearch
+              existingCollaborators={collaborators}
+              getCollaborator={(user) => addCollaborator(user)}
+            >
+              <Button className="text-sm mt-4" type="button">
+                <Plus />
+                Add Collaborators
+              </Button>
+            </CollaboratorSearch>
+            <div className="mt-4">
+              <span className="text-sm text-muted-foreground">
+                Collaborators {collaborators.length || ""}
+              </span>
+              <ScrollArea className="h-[120px] overflow-y-auto w-full rounded-md border border-muted-foreground/20">
+                {collaborators.length ? (
+                  collaborators.map((c) => (
+                    <div
+                      className="p-4 flex
                       justify-between
                       items-center
                 "
-                    key={c.id}
-                  >
-                    <div className="flex gap-4 items-center">
-                      <Avatar>
-                        <AvatarImage src="/avatars/7.png" />
-                        <AvatarFallback>PJ</AvatarFallback>
-                      </Avatar>
-                      <div
-                        className="text-sm 
+                      key={c.id}
+                    >
+                      <div className="flex gap-4 items-center">
+                        <Avatar>
+                          <AvatarImage src="/avatars/7.png" />
+                          <AvatarFallback>PJ</AvatarFallback>
+                        </Avatar>
+                        <div
+                          className="text-sm 
                           gap-2
                           text-muted-foreground
                           overflow-hidden
@@ -231,21 +260,21 @@ const SettingsForm = () => {
                           sm:w-[300px]
                           w-[140px]
                         "
-                      >
-                        {c.email}
+                        >
+                          {c.email}
+                        </div>
                       </div>
+                      <Button
+                        variant="secondary"
+                        onClick={() => removeCollaborator(c)}
+                      >
+                        Remove
+                      </Button>
                     </div>
-                    <Button
-                      variant="secondary"
-                      onClick={() => removeCollaborator(c)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))
-              ) : (
-                <div
-                  className="absolute
+                  ))
+                ) : (
+                  <div
+                    className="absolute
                   right-0 left-0
                   top-0
                   bottom-0
@@ -253,36 +282,57 @@ const SettingsForm = () => {
                   justify-center
                   items-center
                 "
-                >
-                  <span className="text-muted-foreground text-sm">
-                    You have no collaborators
-                  </span>
-                </div>
-              )}
-            </ScrollArea>
+                  >
+                    <span className="text-muted-foreground text-sm">
+                      You have no collaborators
+                    </span>
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
-        </div>
-      )}
-      <Alert variant={'destructive'}>
-        <AlertDescription>
-            Warning! deleting you workspace will permanently delete all data related to this workspace.
-        </AlertDescription>
-        <Button
-        type="submit"
-        size={'sm'}
-        variant={'destructive'}
-        className="mt-4 text-sm border-2 bg-destructive/40 border-destructive"
-        onClick={async()=>{
-            if(!workspaceId) return;
-            await deleteWorkspace(workspaceId)
-            toast({title:'Successfully deleted your workspace!'});
-            dispatch({type:'DELETE_WORKSPACE',payload:workspaceId})
-            router.replace('/dashboard')
-        }}
-        >
+        )}
+        <Alert variant={"destructive"}>
+          <AlertDescription>
+            Warning! deleting you workspace will permanently delete all data
+            related to this workspace.
+          </AlertDescription>
+          <Button
+            type="submit"
+            size={"sm"}
+            variant={"destructive"}
+            className="mt-4 text-sm border-2 bg-destructive/40 border-destructive"
+            onClick={async () => {
+              if (!workspaceId) return;
+              await deleteWorkspace(workspaceId);
+              toast({ title: "Successfully deleted your workspace!" });
+              dispatch({ type: "DELETE_WORKSPACE", payload: workspaceId });
+              router.replace("/dashboard");
+            }}
+          >
             Delete Workspace
-        </Button>
-      </Alert>
+          </Button>
+        </Alert>
+      </>{" "}
+      <AlertDialog open={openAlertMessage}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDescription>
+              Changing a Shared workspace to a Private workspace will remove all
+              collaborators permanantly.
+            </AlertDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenAlertMessage(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={onClickAlertConfirm}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
