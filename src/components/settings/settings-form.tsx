@@ -55,7 +55,7 @@ const SettingsForm = () => {
 
     // wip subscription
 
-    await addCollaborators(collaborators, workspaceId);
+    await addCollaborators([profile], workspaceId);
     setCollaborators([...collaborators, profile]);
   };
 
