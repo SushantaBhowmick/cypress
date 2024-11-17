@@ -13,6 +13,9 @@ import { Button } from "../ui/button";
 import {
   deleteFile,
   deleteFolder,
+  getFileDetails,
+  getFolderDetails,
+  getWorkspaceDetails,
   updateFile,
   updateFolder,
   updateWorkspace,
@@ -31,6 +34,9 @@ import Image from "next/image";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import EmojiPicker from "../global/emoji-Picker";
 import BannerUpload from "../banner-upload/banner-upload";
+import { XCircleIcon } from "lucide-react";
+import { useSocket } from "@/lib/providers/socket-provider";
+import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -98,6 +104,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { socket, isConnected } = useSocket();
+  const [deletingBanner, setDeletingBanner] = useState(false);
+  const { user } = useSupabaseUser();
   const [collaborators, setCollaborators] = useState<
     {
       id: string;
@@ -293,6 +302,176 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
+  const deleteBanner = async () => {
+    if (!fileId) return;
+    setDeletingBanner(true);
+    if (dirType === "file") {
+      if (!folderId || !workspaceId) return;
+      dispatch({
+        type: "UPDATE_FILE",
+        payload: { file: { bannerUrl: "" }, fileId, folderId, workspaceId },
+      });
+      await supabase.storage.from("file-banners").remove([`banner-${fileId}`]);
+      await updateFile({ bannerUrl: "" }, fileId);
+    }
+    if (dirType === "folder") {
+      if (!workspaceId) return;
+      dispatch({
+        type: "UPDATE_FOLDER",
+        payload: { folder: { bannerUrl: "" }, folderId: fileId, workspaceId },
+      });
+      await supabase.storage.from("file-banners").remove([`banner-${fileId}`]);
+      await updateFolder({ bannerUrl: "" }, fileId);
+    }
+    if (dirType === "workspace") {
+      if (!workspaceId) return;
+      dispatch({
+        type: "UPDATE_WORKSPACE",
+        payload: { workspace: { bannerUrl: "" }, workspaceId: fileId },
+      });
+      await supabase.storage.from("file-banners").remove([`banner-${fileId}`]);
+      await updateFolder({ bannerUrl: "" }, fileId);
+    }
+    setDeletingBanner(false);
+  };
+
+  useEffect(() => {
+    if (!fileId) return;
+    let selectedDir;
+
+    const fetchInformation = async () => {
+      if (dirType === "file") {
+        const { data: selectedDir, error } = await getFileDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace("/dashboard");
+        }
+        if (!selectedDir[0]) {
+          if (!workspaceId) return;
+          return router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (!workspaceId || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ""));
+        dispatch({
+          type: "UPDATE_FILE",
+          payload: {
+            file: { data: selectedDir[0].data },
+            fileId,
+            folderId: selectedDir[0].folderId,
+            workspaceId,
+          },
+        });
+      }
+
+      if (dirType === "folder") {
+        const { data: selectedDir, error } = await getFolderDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace("/dashboard");
+        }
+        if (!selectedDir[0]) {
+          if (!workspaceId) return;
+          return router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (!workspaceId || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ""));
+        dispatch({
+          type: "UPDATE_FOLDER",
+          payload: {
+            folder: { data: selectedDir[0].data },
+            folderId: fileId,
+            workspaceId,
+          },
+        });
+      }
+
+      if (dirType === "workspace") {
+        const { data: selectedDir, error } = await getWorkspaceDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace("/dashboard");
+        }
+        if (!workspaceId || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ""));
+        dispatch({
+          type: "UPDATE_WORKSPACE",
+          payload: {
+            workspace: { data: selectedDir[0].data },
+            workspaceId: fileId,
+          },
+        });
+      }
+    };
+    fetchInformation();
+  }, [fileId, workspaceId, quill, dirType]);
+
+  //Create Rooms for our application
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId) return;
+    socket.emit("create-room", fileId);
+  }, []);
+
+  // Send quill changes to all clients
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId || !user) return;
+    const selectionChangeHandler = () => {};
+    const quillHandler = (delta: any, oldDelta: any, source: any) => {
+      if (source !== "user") return;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      setSaving(true);
+      const contents = quill.getContents();
+      const quillLength = quill.getLength();
+      saveTimerRef.current = setTimeout(async () => {
+        if (contents && quillLength !== 1 && fileId) {
+          if (dirType === "workspace") {
+            dispatch({
+              type: "UPDATE_WORKSPACE",
+              payload: {
+                workspace: { data: JSON.stringify(contents) },
+                workspaceId: fileId,
+              },
+            });
+            await updateWorkspace({ data: JSON.stringify(contents) }, fileId);
+          }
+          if (dirType === "folder") {
+            if (!workspaceId) return;
+            dispatch({
+              type: "UPDATE_FOLDER",
+              payload: {
+                folder: { data: JSON.stringify(contents) },
+                workspaceId,
+                folderId: fileId,
+              },
+            });
+            await updateFolder({ data: JSON.stringify(contents) }, fileId);
+          }
+          if (dirType === "file") {
+            if (!workspaceId || !folderId) return;
+            dispatch({
+              type: "UPDATE_FILE",
+              payload: {
+                file: { data: JSON.stringify(contents) },
+                workspaceId,
+                folderId: folderId,
+                fileId,
+              },
+            });
+            await updateFile({ data: JSON.stringify(contents) }, fileId);
+          }
+        }
+        setSaving(false)
+      }, 850);
+      socket.emit('send-changes',delta,fileId);
+    };
+    quill.on('text-change',quillHandler)
+    // wip cursor changes
+
+    return()=>{
+      quill.off('text-changes',quillHandler)
+      if(saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    }
+  }, [quill, socket, fileId, user, details,dispatch,folderId,workspaceId]);
+
   return (
     <>
       <div className="relative">
@@ -474,9 +653,35 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
               transition-all
               rounded-md"
             >
-              {details.bannerUrl ? 'Update Banner' : 'Add Banner'}
+              {details.bannerUrl ? "Update Banner" : "Add Banner"}
             </BannerUpload>
-            </div>
+            {details.bannerUrl && (
+              <Button
+                onClick={deleteBanner}
+                disabled={deletingBanner}
+                variant={"ghost"}
+                className="gap-2 hover:bg-background flex items-center justify-center mt-2 text-sm text-muted-foreground w-36 p-2 rounded-md"
+              >
+                <XCircleIcon size={16} />
+                <span className=" whitespace-nowrap font-normal">
+                  Remove Banner
+                </span>
+              </Button>
+            )}
+          </div>
+          <span
+            className="
+            text-muted-foreground
+            text-3xl
+            font-bold
+            h-9
+          "
+          >
+            {details.title}
+          </span>
+          <span className="text-muted-foreground text-sm">
+            {dirType.toUpperCase()}
+          </span>
         </div>
         <div className="max-w-[800px]" id="container" ref={wrapperRef}></div>
       </div>
