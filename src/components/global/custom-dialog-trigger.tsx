@@ -13,7 +13,7 @@ import clsx from 'clsx';
     header?:string;
     content?:React.ReactNode;
     children:React.ReactNode;
-    description:string;
+    description?:string;
     className?:string;
   }
 
