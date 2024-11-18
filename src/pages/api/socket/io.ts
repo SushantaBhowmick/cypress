@@ -21,9 +21,11 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerTo) => {
 
     io.on("connection", (s) => {
       s.on("create-room", (fileId) => {
+        console.log('room-created')
         s.join(fileId);
       });
       s.on("send-changes", (deltas, fileId) => {
+        console.log('send')
         s.to(fileId).emit("receive-changes", deltas, fileId);
       });
       s.on("send-cursor-move", (range, fileId, cursorId) => {
