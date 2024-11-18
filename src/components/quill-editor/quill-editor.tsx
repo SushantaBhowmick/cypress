@@ -472,6 +472,24 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [quill, socket, fileId, user, details,dispatch,folderId,workspaceId]);
 
+  useEffect(()=>{
+    console.log('render')
+    if (socket === null || quill === null) return;
+    const socketHandler = (deltas:any,id:string)=>{
+      console.log(deltas)
+      console.log(id)
+      if(id===fileId){
+        quill.updateContents(deltas);
+      }
+    };
+    socket.on('receive-changes',socketHandler)
+
+    return ()=>{
+      socket.off('receive-cahnges',socketHandler)
+    }
+
+  },[quill,socket,fileId])
+
   return (
     <>
       <div className="relative">
