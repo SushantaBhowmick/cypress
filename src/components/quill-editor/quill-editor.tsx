@@ -409,7 +409,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   useEffect(() => {
     if (socket === null || quill === null || !fileId) return;
     socket.emit("create-room", fileId);
-  }, []);
+  }, [socket,quill,fileId]);
 
   // Send quill changes to all clients
   useEffect(() => {
@@ -472,8 +472,25 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [quill, socket, fileId, user, details,dispatch,folderId,workspaceId]);
 
+  useEffect(()=>{
+    if (socket === null || quill === null) return;
+    const socketHandler = (deltas:any,id:string)=>{
+      console.log('render')
+      if(id===fileId){
+        quill.updateContents(deltas);
+      }
+    };
+    socket.on('receive-changes',socketHandler)
+
+    return ()=>{
+      socket.off('receive-cahnges',socketHandler)
+    }
+
+  },[quill,socket,fileId])
+
   return (
     <>
+    {isConnected ? 'user connected':"user not connected"}
       <div className="relative">
         {details.inTrash && (
           <article
