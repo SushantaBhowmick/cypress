@@ -30,7 +30,7 @@ export async function middleware(req: NextRequest) {
 
   if (["/login", "/signup"].includes(req.nextUrl.pathname)) {
     if (session) {
-      console.log("running");
+      console.log("User is already logged in, redirecting to dashboard");
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }

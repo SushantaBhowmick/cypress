@@ -14,10 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/global/Loader";
 import { actionLoginUser } from "@/lib/serverActions/auth-actions";
+import { useToast } from "@/hooks/use-toast";
 
 const LoginPage = () => {
   const router = useRouter()
   const [submitError, setSubmitError] = useState("");
+  const {toast} = useToast()
 
   const form = useForm<z.infer<typeof FormSchema>>({
     mode: "onChange",
@@ -30,12 +32,24 @@ const LoginPage = () => {
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (
     formData
   ) => {
-    const {error} = await actionLoginUser(formData)
+    const {data,error} = await actionLoginUser(formData)
     if(error){
-        form.reset()
+      console.log(error)
+        // form.reset()
         setSubmitError(error.message)
+        toast({
+          title:error.code,
+          variant:'destructive',
+          description:'Check your Mail-id and Password'
+        })
+    }else{
+      router.replace('/dashboard')
+      toast({
+        title:"Success",
+        description:'Redirecting you to Dashboard'
+      })
     }
-    router.replace('/dashboard')
+    
   };
 
   return (

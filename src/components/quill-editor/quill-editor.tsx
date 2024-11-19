@@ -460,8 +460,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           }
         }
         setSaving(false)
-      }, 850);
-      socket.emit('send-changes',delta,fileId);
+        socket.emit('send-changes',delta,fileId);
+      }, 0);
     };
     quill.on('text-change',quillHandler)
     // wip cursor changes
