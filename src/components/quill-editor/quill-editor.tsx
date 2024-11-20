@@ -460,8 +460,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           }
         }
         setSaving(false)
-        socket.emit('send-changes',delta,fileId);
-      }, 0);
+      }, 850);
+      socket.emit('send-changes',delta,fileId);
     };
     quill.on('text-change',quillHandler)
     // wip cursor changes
@@ -490,7 +490,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   return (
     <>
-    {isConnected ? 'user connected':"user not connected"}
       <div className="relative">
         {details.inTrash && (
           <article
