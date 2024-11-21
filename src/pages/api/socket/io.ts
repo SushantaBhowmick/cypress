@@ -29,6 +29,7 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerTo) => {
         s.to(fileId).emit("receive-changes", deltas, fileId);
       });
       s.on("send-cursor-move", (range, fileId, cursorId) => {
+        console.log('send-cursor-change')
         s.to(fileId).emit("receive-cursor-move", range, fileId, cursorId);
       });
     });
