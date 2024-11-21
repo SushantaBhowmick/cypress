@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import {
   deleteFile,
   deleteFolder,
+  findUser,
   getFileDetails,
   getFolderDetails,
   getWorkspaceDetails,
@@ -113,9 +114,11 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       email: string;
       avatarUrl: string;
     }[]
-  >(dummyCollaborators);
+  >([]);
 
   const [saving, setSaving] = useState(false);
+  const [localCursors, setLocalCursors] = useState<any>([]);
+
 
   const details = useMemo(() => {
     let selectedDir;
@@ -216,12 +219,16 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
       // Dynamically import Quill
       const Quill = (await import("quill")).default;
+      const QuillCursors = (await import('quill-cursors')).default;
+      Quill.register('modules/cursors',QuillCursors) 
 
       const q = new Quill(editor, {
         theme: "snow",
         modules: {
           toolbar: TOOLBAR_OPTIONS,
-          // Add other modules if needed
+          cursors:{
+            transformOnTextChange:true,
+          }
         },
       });
 
@@ -414,7 +421,13 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   // Send quill changes to all clients
   useEffect(() => {
     if (socket === null || quill === null || !fileId || !user) return;
-    const selectionChangeHandler = () => {};
+    const selectionChangeHandler = (cursorId:string) => {
+      return (range:any,oldRange:any,source:any)=>{
+        if(source==='user' && cursorId)
+          console.log('cursor-called')
+          socket.emit('send-cursor-move',range,fileId,cursorId);
+      }
+    };
     const quillHandler = (delta: any, oldDelta: any, source: any) => {
       if (source !== "user") return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -464,10 +477,11 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       socket.emit('send-changes',delta,fileId);
     };
     quill.on('text-change',quillHandler)
-    // wip cursor changes
+    quill.on('selection-change',selectionChangeHandler(user.id))
 
     return()=>{
       quill.off('text-changes',quillHandler)
+      quill.off('selection-change',selectionChangeHandler(user.id))
       if(saveTimerRef.current) clearTimeout(saveTimerRef.current);
     }
   }, [quill, socket, fileId, user, details,dispatch,folderId,workspaceId]);
@@ -486,7 +500,61 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       socket.off('receive-cahnges',socketHandler)
     }
 
-  },[quill,socket,fileId])
+  },[quill,socket,fileId]);
+
+  useEffect(()=>{
+    if (quill === null || socket === null || !fileId || !localCursors.length) return;
+    const socketHandler = (range:any,roomId:string,cursorId:string)=>{
+      if(roomId===fileId){
+        const cursorToMove = localCursors.find((c:any)=>c.cursors()?.[0].id===cursorId)
+        if(cursorToMove){
+          cursorToMove.moveCursor(cursorId,range)
+        }
+      }
+    }
+    socket.on('receive-cursor-move',socketHandler)
+    return()=>{
+      socket.off('receive-cursor-move',socketHandler)
+    }
+  },[quill,socket,fileId,localCursors])
+
+  useEffect(()=>{
+    if(!fileId || quill===null) return;
+    const room = supabase.channel(fileId);
+    const subscription = room.on('presence',{event:'sync'},()=>{
+      const newState = room.presenceState();
+      const newCollaborators= Object.values(newState).flat() as any;
+      setCollaborators(newCollaborators);
+      if(user){
+        const allCursors:any=[];
+        newCollaborators.forEach((collaborator:{id:string;email:string;avatar:string})=>{
+          if(collaborator.id!==user.id){
+            const userCursor = quill.getModule('cursors');
+            userCursor.createCursor(
+              collaborator.id,
+              collaborator.email.split('@')[0],
+              `#${Math.random().toString(16).slice(2,8)}`
+            );
+            allCursors.push(userCursor)
+          }
+        });
+        setLocalCursors(allCursors)
+      }
+    })
+    .subscribe(async(status:any)=>{
+      if(status!=='SUBSCRIBED'||!user) return;
+      const response = await findUser(user.id)
+      if(!response) return;
+      room.track({
+        id:user.id,
+        email:user.email?.split('@')[0],
+        avatarUrl:response.avatarUrl? supabase.storage.from('avatars').getPublicUrl(response.avatarUrl).data.publicUrl:''
+      })
+    });
+    return ()=>{
+      supabase.removeChannel(room);
+    }
+  },[fileId,quill,supabase,user])
 
   return (
     <>
