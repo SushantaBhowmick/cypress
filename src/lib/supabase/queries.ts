@@ -2,7 +2,7 @@
 
 import { validate } from "uuid";
 import db from "./db";
-import { Subscription, workspace, File, Folder, User } from "./supabase-types";
+import { Subscription, workspace, File, Folder, User, Price } from "./supabase-types";
 import { files, workspaces, folders, users } from "../../../migrations/schema";
 import { and, eq, ilike, notExists } from "drizzle-orm";
 import { collaborators } from "./schema";
@@ -20,11 +20,11 @@ export const getUserSubscriptionStatus = async (userId: string) => {
   }
 };
 export const findUser = async (userId: string) => {
-    const response = await db.query.users.findFirst({
-      where: (u, { eq }) => eq(u.id, userId),
-    });
-   
- return response
+  const response = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, userId),
+  });
+
+  return response;
 };
 
 export const createWorkspace = async (workspace: workspace) => {
@@ -340,4 +340,22 @@ export const getUsersFromSearch = async (email: string) => {
     .from(users)
     .where(ilike(users.email, `${email}%`));
   return accounts;
+};
+
+export const getActiveProductsWithPrice = async () => {
+  try {
+    const res = await db.query.products.findMany({
+      where: (pro, { eq }) => eq(pro.active, true),
+      with: {
+        prices: {
+          where: (pri:Price, { eq }:{eq:any}) => eq(pri.active, true),
+        },
+      },
+    });
+    if (res.length) return { data: res, error: null };
+    return { data: [], error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error };
+  }
 };

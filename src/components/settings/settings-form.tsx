@@ -4,7 +4,7 @@ import { useAppState } from "@/lib/providers/state-provider";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { User, workspace } from "@/lib/supabase/supabase-types";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Briefcase, Lock, Plus, Share } from "lucide-react";
+import { Briefcase, CreditCard, ExternalLink, Lock, LogOut, Plus, Share, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { Separator } from "../ui/separator";
@@ -32,10 +32,14 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Alert, AlertDescription } from "../ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import CypressProfileIcon from "../icons/cypressProfileIcon";
+import LogoutButton from "../global/logout-button";
+import Link from "next/link";
+import { useSubscriptionModal } from "@/lib/providers/subscription-modal-provider";
 
 const SettingsForm = () => {
   const { toast } = useToast();
-  const { user } = useSupabaseUser();
+  const { user,subscription } = useSupabaseUser();
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { state, workspaceId, dispatch } = useAppState();
@@ -46,6 +50,7 @@ const SettingsForm = () => {
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const {open,setOpen} = useSubscriptionModal()
 
   //WIP payment portal
 
@@ -183,8 +188,14 @@ const SettingsForm = () => {
           accept="image/*"
           placeholder="Workspace Logo"
           onChange={onChangeWorkspaceLogo}
-          disabled={uploadingLogo}
+          disabled={uploadingLogo || subscription?.status!=='active'}
+          className=" cursor-pointer"
         />
+        {subscription?.status!=='active' && 
+        <small className="text-muted-foreground">
+          To customize your workspace, you need to be on a Pro Plan.
+        </small>
+        }
         {/* WIP subscription */}
       </div>
       <>
@@ -313,6 +324,84 @@ const SettingsForm = () => {
             Delete Workspace
           </Button>
         </Alert>
+        <p className="flex items-center gap-2 mt-6">
+          <UserIcon size={20} /> Profile
+        </p>
+        <Separator />
+       <div className="flex items-center">
+       <Avatar>
+            <AvatarImage src={''} />
+            <AvatarFallback>
+              <CypressProfileIcon />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col ml-6">
+            <small className="text-muted-foreground cursor-not-allowed">
+              {user ? user.email : ''}
+            </small>
+            <Label
+              htmlFor="profilePicture"
+              className="text-sm text-muted-foreground"
+            >
+              Profile Picture
+            </Label>
+            <Input
+              name="profilePicture"
+              type="file"
+              accept="image/*"
+              placeholder="Profile Picture"
+              // onChange={onChangeProfilePicture}
+              disabled={uploadingProfilePic}
+            />
+          </div>
+       </div>
+       <LogoutButton>
+       <div className="flex items-center">
+            <LogOut name="Logout"/>
+          </div>
+       </LogoutButton>
+       <p className="flex items-center gap-2 mt-6">
+          <CreditCard size={20} /> Billing & Plan
+        </p>
+        <Separator />
+        <p className="text-muted-foreground">
+          You are currently on a{' '}
+          {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
+        </p>
+        <Link
+          href="/"
+          target="_blank"
+          className="text-muted-foreground flex flex-row items-center gap-2"
+        >
+          View Plans <ExternalLink size={16} />
+        </Link>
+        {subscription?.status === 'active' ? (
+          <div>
+            <Button
+              type="button"
+              size="sm"
+              variant={'secondary'}
+              // disabled={loadingPortal}
+              className="text-sm"
+              // onClick={redirectToCustomerPortal}
+            >
+              Manage Subscription
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button
+              type="button"
+              size="sm"
+              variant={'secondary'}
+              className="text-sm"
+              onClick={() => setOpen(true)}
+            >
+              Start Plan
+            </Button>
+          </div>
+        )}
+
       </>{" "}
       <AlertDialog open={openAlertMessage}>
         <AlertDialogContent>
