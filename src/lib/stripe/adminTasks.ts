@@ -1,9 +1,11 @@
 import Stripe from "stripe";
-import { Price, Product } from "../supabase/supabase-types";
+import { Price, Product, Subscription } from "../supabase/supabase-types";
 import db from "../supabase/db";
 import { customers, prices, products, users } from "../../../migrations/schema";
 import { stripe } from "./index";
 import { eq } from "drizzle-orm";
+import { toDateTime } from "../utils";
+import { subscriptions } from "../supabase/schema";
 
 export const upsertProductRecord = async (product: Stripe.Product) => {
   const productData: Product = {
@@ -58,22 +60,34 @@ export const createOrRetriveCustomer = async ({
   email: string;
   uuid: string;
 }) => {
+  console.log(email,uuid)
   try {
     const response = await db.query.customers.findFirst({
       where: (c, { eq }) => eq(c.id, uuid),
     });
-    if (!response) throw new Error();
+    console.log("response",response)
+    if (!response) {
+      console.log('error')
+      throw new Error();
+    }
     return response.stripeCustomerId;
   } catch (error) {
-    const customerData: { metaData: { supabaseUUID: string }; email?: string } =
+    console.log('come here')
+    const customerData: { metadata: { supabaseUUID: string }; email?: string } =
       {
-        metaData: {
+        metadata: {
           supabaseUUID: uuid,
         },
       };
+      console.log(customerData)
     if (email) customerData.email = email;
     try {
       const customer = await stripe.customers.create(customerData);
+      if(customer){
+        console.log(customer)
+      }else{
+        console.log('customer issue')
+      }
       await db
         .insert(customers)
         .values({ id: uuid, stripeCustomerId: customer.id });
@@ -81,6 +95,7 @@ export const createOrRetriveCustomer = async ({
       console.log(`New customer created and inserted for ${uuid}.`);
       return customer.id;
     } catch (error) {
+      console.log('Error::')
       throw new Error("Could not create Customer or find the customer");
     }
   }
@@ -123,7 +138,53 @@ export const manageSubsscriptionStatusChange = async (
       expand: ["default_payment_method"],
     });
     console.log("🟢UPDATED to  ", subscription.status);
+
+    const subscriptionData: Subscription = {
+      id: subscription.id,
+      userId: uuid,
+      metadata: subscription.metadata,
+      //@ts-ignore
+      status: subscription.status,
+      priceId: subscription.items.data[0].price.id,
+      //@ts-ignore
+      quantity: subscription.quantity,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      cancelAt: subscription.cancel_at
+        ? toDateTime(subscription.cancel_at).toISOString()
+        : null,
+      currentPeriodStart: toDateTime(
+        subscription.current_period_start
+      ).toISOString(),
+      currentPeriodEnd: toDateTime(
+        subscription.current_period_end
+      ).toISOString(),
+      endedAt: subscription.ended_at
+        ? toDateTime(subscription.ended_at).toISOString()
+        : null,
+      trialStart: subscription.trial_start
+        ? toDateTime(subscription.trial_start).toISOString()
+        : null,
+      trialEnd: subscription.trial_end
+        ? toDateTime(subscription.trial_end).toISOString()
+        : null,
+    };
+
+    await db
+      .insert(subscriptions)
+      .values(subscriptionData)
+      .onConflictDoUpdate({ target: subscriptions.id, set: subscriptionData });
+
+    console.log(
+      `Inserted/updated subscription [${subscription.id}] for user [${uuid}]`
+    );
+
+    if (createAction && subscription.default_payment_method && uuid) {
+      await copyBillingDetailsToCustomers(
+        uuid,
+        subscription.default_payment_method as Stripe.PaymentMethod
+      );
+    }
   } catch (error) {
-    throw new Error("Couldnot copy customer billing details");
+    throw error;
   }
 };
