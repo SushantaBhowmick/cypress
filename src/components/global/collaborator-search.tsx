@@ -29,7 +29,7 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
   getCollaborator,
 }) => {
   const { user } = useSupabaseUser();
-  const [searchResults, setSearchResults] = useState<User[]|[]>([]);
+  const [searchResults, setSearchResults] = useState<User[] | []>([]);
   const timeRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -38,15 +38,15 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
     }
   }, []);
 
-  const onChangeHandler = (e:React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (timeRef.current) clearTimeout(timeRef.current);
-    timeRef.current=setTimeout(async()=>{
-        const res = await getUsersFromSearch(e.target.value)
-        setSearchResults(res)
-    },500)
+    timeRef.current = setTimeout(async () => {
+      const res = await getUsersFromSearch(e.target.value);
+      setSearchResults(res);
+    }, 500);
   };
-  const addCollaborator = (user:User) => {
-    getCollaborator(user)
+  const addCollaborator = (user: User) => {
+    getCollaborator(user);
   };
 
   return (
@@ -70,7 +70,6 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
           />
         </div>
         <ScrollArea className="mt-6 overflow-y-auto w-full rounded-md">
-
           {searchResults
             .filter(
               (result) =>
@@ -80,21 +79,21 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
             )
             .filter((item) => item.id !== user?.id)
             .map((user, i) => (
-              <div
-                key={i}
-                className="p-4 flex justify-center items-center"
-              >
+              <div key={i} className="p-4 flex justify-center items-center">
                 <div className="flex gap-4 items-center">
-                    <Avatar>
-                        <AvatarImage src="/avatars/7.png"></AvatarImage>
-                        <AvatarFallback>CP</AvatarFallback>
-                    </Avatar>
-                    <div className="text-sm gap-2 overflow-hidden overflow-ellipsis w-[180px] text-muted-foreground">
-                        {user.email}
-                    </div>
+                  <Avatar>
+                    <AvatarImage src="/avatars/7.png"></AvatarImage>
+                    <AvatarFallback>CP</AvatarFallback>
+                  </Avatar>
+                  <div className="text-sm gap-2 overflow-hidden overflow-ellipsis w-[180px] text-muted-foreground">
+                    {user.email}
+                  </div>
                 </div>
-                <Button variant={'secondary'} onClick={()=>addCollaborator(user)}>
-                    Add
+                <Button
+                  variant={"secondary"}
+                  onClick={() => addCollaborator(user)}
+                >
+                  Add
                 </Button>
               </div>
             ))}
