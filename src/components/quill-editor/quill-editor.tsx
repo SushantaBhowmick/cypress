@@ -424,7 +424,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     const selectionChangeHandler = (cursorId:string) => {
       return (range:any,oldRange:any,source:any)=>{
         if(source==='user' && cursorId)
-          console.log('cursor-called')
           socket.emit('send-cursor-move',range,fileId,cursorId);
       }
     };
@@ -489,7 +488,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   useEffect(()=>{
     if (socket === null || quill === null) return;
     const socketHandler = (deltas:any,id:string)=>{
-      console.log('render')
       if(id===fileId){
         quill.updateContents(deltas);
       }

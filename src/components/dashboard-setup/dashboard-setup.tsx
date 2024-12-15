@@ -60,7 +60,6 @@ console.log("user",user)
     const file = value.logo?.[0];
     let filePath = null;
     const workspaceUUID = v4();
-    console.log(file)
 
     if (file) {
       const fileUUID = v4();

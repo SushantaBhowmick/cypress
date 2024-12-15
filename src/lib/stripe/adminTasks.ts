@@ -28,7 +28,6 @@ export const upsertProductRecord = async (product: Stripe.Product) => {
 };
 
 export const upsertPriceRecord = async (price: Stripe.Price) => {
-  console.log(price, "PRICE");
   const priceData: Price = {
     id: price.id,
     productId: typeof price.product === "string" ? price.product : null,
@@ -60,34 +59,24 @@ export const createOrRetriveCustomer = async ({
   email: string;
   uuid: string;
 }) => {
-  console.log(email,uuid)
   try {
     const response = await db.query.customers.findFirst({
       where: (c, { eq }) => eq(c.id, uuid),
     });
-    console.log("response",response)
     if (!response) {
-      console.log('error')
       throw new Error();
     }
     return response.stripeCustomerId;
   } catch (error) {
-    console.log('come here')
     const customerData: { metadata: { supabaseUUID: string }; email?: string } =
       {
         metadata: {
           supabaseUUID: uuid,
         },
       };
-      console.log(customerData)
     if (email) customerData.email = email;
     try {
       const customer = await stripe.customers.create(customerData);
-      if(customer){
-        console.log(customer)
-      }else{
-        console.log('customer issue')
-      }
       await db
         .insert(customers)
         .values({ id: uuid, stripeCustomerId: customer.id });
@@ -95,7 +84,6 @@ export const createOrRetriveCustomer = async ({
       console.log(`New customer created and inserted for ${uuid}.`);
       return customer.id;
     } catch (error) {
-      console.log('Error::')
       throw new Error("Could not create Customer or find the customer");
     }
   }

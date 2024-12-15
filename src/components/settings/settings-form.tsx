@@ -165,7 +165,6 @@ const SettingsForm = () => {
     if (!workspaceId) return;
     const fetchCollaborators = async () => {
       const response = await getCollaborators(workspaceId);
-      console.log(response);
       if (response.length) {
         setPermissions("shared");
         setCollaborators(response);

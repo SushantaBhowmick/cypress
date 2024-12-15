@@ -25,8 +25,6 @@ const DashboardPage = async () => {
   if(subscriptionError) return;
 
 
-  console.log("Workspace",workspace)
-
   if (!workspace){
     return (
       <div className="bg-background h-screen w-screen flex justify-center items-center">
