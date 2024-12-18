@@ -128,7 +128,33 @@ export const collaborators = pgTable("collaborators", {
 });
 export const dummy = pgTable("dummy", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
-  name:text('name')
+  name:text('name'),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  assigned_to:uuid('assigned_to')
+  .notNull()
+  .references(()=>collaborators.id,{onDelete:'cascade'})
+});
+
+export const tasks = pgTable("tasks", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("pending").notNull(),
+  assignedTo: uuid("assigned_to")
+    .notNull()
+    .references(() => collaborators.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id,{ onDelete: "cascade" }),
+  dueDate: timestamp("due_date", { withTimezone: true, mode: "string" }),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
 });
 
 export const productsRelations = relations(products,({many})=>({

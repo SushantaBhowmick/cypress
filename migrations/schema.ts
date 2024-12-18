@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, uuid, text, foreignKey, timestamp, boolean, jsonb, integer, bigint } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, pgEnum, uuid, text, timestamp, boolean, jsonb, integer, bigint } from "drizzle-orm/pg-core"
 
 import { relations, sql } from "drizzle-orm"
 export const keyStatus = pgEnum("key_status", ['default', 'valid', 'invalid', 'expired'])
@@ -18,6 +18,8 @@ export const equalityOp = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt',
 export const dummy = pgTable("dummy", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	name: text("name"),
+	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
+	assignedTo: uuid("assigned_to").notNull().references(() => collaborators.id, { onDelete: "cascade" } ),
 });
 
 export const customers = pgTable("customers", {
@@ -89,7 +91,6 @@ export const subscriptions = pgTable("subscriptions", {
 	  mode: "string",
 	}).default(sql`now()`),
   });
-  
 
 export const users = pgTable("users", {
 	id: uuid("id").primaryKey().notNull(),
@@ -147,13 +148,25 @@ export const workspaces = pgTable("workspaces", {
 	bannerUrl: text("banner_url"),
 });
 
+export const tasks = pgTable("tasks", {
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
+	title: text("title").notNull(),
+	description: text("description"),
+	status: text("status").default('pending').notNull(),
+	assignedTo: uuid("assigned_to").notNull().references(() => collaborators.id, { onDelete: "cascade" } ),
+	createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	dueDate: timestamp("due_date", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});
+
 export const productsRelations = relations(products,({many})=>({
-	prices:many(prices)
-  }));
-  
-  export const priceRelations = relations(prices,({one})=>({
-	product:one(products,{
-	  fields:[prices.productId],
-	  references:[products.id]
-	})
-  }))
+  prices:many(prices)
+}));
+
+export const priceRelations = relations(prices,({one})=>({
+  product:one(products,{
+	fields:[prices.productId],
+	references:[products.id]
+  })
+}))
