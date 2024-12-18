@@ -5,6 +5,7 @@ import {
   prices,
   products,
   subscriptions,
+  tasks,
   users,
   workspaces,
 } from '../../../migrations/schema';
@@ -392,6 +393,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      tasks: {
+        Row: {
+          title: string | null;
+          description: string;
+          status: string | null;
+          id: string;
+          due_date: string | null;
+          assigned_to: string;
+          workspace_id: string;
+          created_by: string;
+        };
+        Insert: {
+          title: string | null;
+          description: string;
+          status: string | null;
+          id: string;
+          due_date: string | null;
+          assigned_to: string;
+          workspace_id: string;
+          created_by: string;
+        };
+        Update: {
+          title: string | null;
+          description: string;
+          status: string | null;
+          id: string;
+          due_date: string | null;
+          assigned_to: string;
+          workspace_id: string;
+          created_by: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -424,6 +458,7 @@ export type File = InferSelectModel<typeof files>;
 export type Product = InferSelectModel<typeof products>;
 export type Price = InferSelectModel<typeof prices> & { products?: Product };
 export type Customer = InferSelectModel<typeof customers>;
+export type tasks = InferSelectModel<typeof tasks>;
 export type Subscription = InferSelectModel<typeof subscriptions> & {
   prices: Price;
 };

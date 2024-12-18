@@ -6,6 +6,7 @@ import CypressSettingsIcon from "../icons/cypressSettingsIcon";
 import CypressTrashIcon from "../icons/cypressTrashIcon";
 import Settings from "../settings/settings";
 import Trash from "../trash/trash";
+import { ClipboardList } from "lucide-react";
 
 interface NativeNavigationProps {
   myWorkspaceId: string;
@@ -26,6 +27,15 @@ const NativeNavigation: React.FC<NativeNavigationProps> = ({
           >
             <CypressHomeIcon />
             <span>My Workspace</span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            className=" gap-2 items-center group/native flex transition-all text-Neutrals/neutrals-7"
+            href={`/dashboard/${myWorkspaceId}/tasks`}
+          >
+            <ClipboardList color="#343a40" />
+            <span>Tasks</span>
           </Link>
         </li>
         <Settings>
