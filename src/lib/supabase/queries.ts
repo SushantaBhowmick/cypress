@@ -2,8 +2,8 @@
 
 import { validate } from "uuid";
 import db from "./db";
-import { Subscription, workspace, File, Folder, User, Price } from "./supabase-types";
-import { files, workspaces, folders, users } from "../../../migrations/schema";
+import { Subscription, workspace, File, Folder, User, Price, tasks as task } from "./supabase-types";
+import { files, workspaces, folders, users, tasks } from "../../../migrations/schema";
 import { and, eq, ilike, notExists } from "drizzle-orm";
 import { collaborators } from "./schema";
 
@@ -377,5 +377,26 @@ export const getActiveProductsWithPrice = async () => {
   } catch (error) {
     console.log(error);
     return { data: [], error };
+  }
+};
+
+
+export const createTask = async (task: task) => {
+  try {
+    const response = await db.insert(tasks).values(task);
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const getTasks = async () => {
+  try {
+    const response = await db.select().from(tasks)
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
   }
 };

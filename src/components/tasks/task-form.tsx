@@ -1,6 +1,6 @@
 "use client";
 import { ListCheckIcon, PlusCircle } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -9,7 +9,7 @@ import { Calendar } from "../ui/calendar";
 import DatePicker from "./date-picker";
 import { Button } from "../ui/button";
 import CollaboratorSearch from "../global/collaborator-search";
-import { User } from "@/lib/supabase/supabase-types";
+import { tasks, User } from "@/lib/supabase/supabase-types";
 import AssignerSearch from "./assigner-search";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAppState } from "@/lib/providers/state-provider";
@@ -20,7 +20,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { taskSchema } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { tasks } from "../../../migrations/schema";
 import {
   Form,
   FormControl,
@@ -29,6 +28,10 @@ import {
   FormMessage,
 } from "../ui/form";
 import Loader from "../global/Loader";
+import { createTask } from "@/lib/supabase/queries";
+import { date } from "drizzle-orm/mysql-core";
+import { v4 } from "uuid";
+import axios from 'axios'
 
 const TaskForm = () => {
   const [collaborators, setCollaborators] = useState<User[] | []>([]);
@@ -41,14 +44,56 @@ const TaskForm = () => {
   const form = useForm<z.infer<typeof taskSchema>>({
     mode: "onChange",
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: "", description: "", assignedTo: "" },
+    defaultValues: {
+      title: "",
+      description: "",
+      assigned_to: "",
+    },
   });
+  const { setValue } = form;
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit: SubmitHandler<z.infer<typeof taskSchema>> = async (
     formData
   ) => {
-    console.log(formData);
+    const taskUUID = v4();
+    if (!workspaceId || !user?.email) return;
+    const obj: tasks = {
+      title: formData.title,
+      description: formData.description,
+      status: "pending",
+      id: taskUUID,
+      dueDate: null,
+      assignedTo: formData.assigned_to,
+      workspaceId: workspaceId,
+      createdBy: user.email,
+      createdAt: new Date().toISOString(),
+    };
+    const { data, error } = await createTask(obj);
+    if (error) {
+      console.log(error);
+      toast({
+        title:"Task craetation issue",
+        variant:'destructive',
+        description:error
+      })
+    }else{
+     try {
+      const email = formData.assigned_to;
+      const res = axios.post('/api/send-email',{email})
+      console.log('Success:', res);
+      toast({
+        title:"Success",
+        description:'Task Created Successfully!'
+      })
+     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error response:', error.response?.data);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+     }
+    }
   };
 
   const addCollaborator = (user: User) => {
@@ -57,10 +102,15 @@ const TaskForm = () => {
       return;
     }
     setCollaborators([user]);
+    if (!user.email) return;
+    setValue("assigned_to", user.email);
   };
+
   const removeCollaborator = (user: User) => {
     setCollaborators(collaborators.filter((c) => c.id !== user.id));
+    setValue("assigned_to", "");
   };
+
   return (
     <div className="flex gap-4 flex-col">
       <p className="flex items-center gap-2 mt-6">
@@ -117,6 +167,24 @@ const TaskForm = () => {
           </Label>
           <DatePicker /> */}
 
+            <FormField
+              disabled={isLoading}
+              control={form.control}
+              name="assigned_to"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Assign To"
+                      {...field}
+                      className=" hidden"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <Separator />
             <AssignerSearch
               existingCollaborators={collaborators}
@@ -161,12 +229,12 @@ const TaskForm = () => {
                         {c.email}
                       </div>
                     </div>
-                    {/* <Button
+                    <Button
                       variant="secondary"
                       onClick={() => removeCollaborator(c)}
                     >
                       Remove
-                    </Button> */}
+                    </Button>
                   </div>
                 ))
               ) : (

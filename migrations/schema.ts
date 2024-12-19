@@ -148,25 +148,27 @@ export const workspaces = pgTable("workspaces", {
 	bannerUrl: text("banner_url"),
 });
 
+
 export const tasks = pgTable("tasks", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
 	title: text("title").notNull(),
 	description: text("description"),
 	status: text("status").default('pending').notNull(),
-	assignedTo: uuid("assigned_to").notNull().references(() => collaborators.id, { onDelete: "cascade" } ),
-	createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	createdBy: text("created_by").notNull(),
 	dueDate: timestamp("due_date", { withTimezone: true, mode: 'string' }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	assignedTo: text("assigned_to").notNull(),
 });
 
-export const productsRelations = relations(products,({many})=>({
-  prices:many(prices)
+
+export const productsRelations = relations(products, ({ many }) => ({
+  prices: many(prices),
 }));
 
-export const priceRelations = relations(prices,({one})=>({
-  product:one(products,{
-	fields:[prices.productId],
-	references:[products.id]
-  })
-}))
+export const priceRelations = relations(prices, ({ one }) => ({
+  product: one(products, {
+	fields: [prices.productId],
+	references: [products.id],
+  }),
+}));
