@@ -342,6 +342,26 @@ export const getUsersFromSearch = async (email: string) => {
   return accounts;
 };
 
+export const getCollaboratorsFromSearch = async (email: string,workspaceId:string) => {
+  if (!email) return [];
+  const res = db
+    .select({
+      id:collaborators.id,
+      workspaceId:collaborators.workspaceId,
+      userId:users.id,
+      email:users.email
+    })
+    .from(collaborators)
+    .innerJoin(users,eq(collaborators.userId,users.id))
+    .where(
+      and(
+        ilike(users.email, `${email}%`),
+        eq(collaborators.workspaceId,workspaceId)
+      )
+    );
+  return res;
+};
+
 export const getActiveProductsWithPrice = async () => {
   try {
     const res = await db.query.products.findMany({

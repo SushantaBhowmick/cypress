@@ -22,6 +22,7 @@ const TaskTable = () => {
             <TableHead>Status</TableHead>
             <TableHead>Assigned to</TableHead>
             <TableHead className="text-right">Due Date</TableHead>
+            <TableHead className="text-right">Creared By</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -34,6 +35,7 @@ const TaskTable = () => {
               <TableCell>Pending</TableCell>
               <TableCell>Sushanta Bhowmick</TableCell>
               <TableCell className="text-right">25/5/25</TableCell>
+              <TableCell className="text-right">Sushanta Bhowmick</TableCell>
             </TableRow>
           ))}
         </TableBody>

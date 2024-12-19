@@ -9,6 +9,12 @@ export const FormSchema = z.object({
   password: z.string().describe("Password").min(1, "Password is required"),
 });
 
+export const taskSchema = z.object({
+  title: z.string().describe("title").min(6,"Title must be atleast 6 letters"),
+  description: z.string().describe("description").min(10, "Description must be atleast 10 letters"),
+  assignedTo: z.string().describe("assignedTo").min(1, "Assign to can't be empty"),
+});
+
 export const CreateWorkspaceFormSchema = z.object({
   workspaceName: z
     .string()
