@@ -7,7 +7,6 @@ interface SettingsProps{
 }
 
 const Settings:React.FC<SettingsProps> = ({children}) => {
-  console.log(children)
   return (
     <CustomDialogTrigger 
     header='Settings'
