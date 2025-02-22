@@ -40,7 +40,7 @@ import { postData } from "@/lib/utils";
 
 const SettingsForm = () => {
   const { toast } = useToast();
-  const { user,subscription } = useSupabaseUser();
+  const { user } = useSupabaseUser();
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { state, workspaceId, dispatch } = useAppState();
@@ -51,7 +51,7 @@ const SettingsForm = () => {
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const {open,setOpen} = useSubscriptionModal();
+  const {setOpen,subscription} = useSubscriptionModal();
   const [loadingPortal,setLoadingPortal]=useState(false)
 
   //WIP payment portal
@@ -72,7 +72,6 @@ const SettingsForm = () => {
   //add collaborators
   const addCollaborator = async (profile: User) => {
     if (!workspaceId) return;
-
     if(subscription?.status!=='active' && collaborators.length>=2){
       setOpen(true);
       return;
@@ -264,7 +263,7 @@ const SettingsForm = () => {
               <span className="text-sm text-muted-foreground">
                 Collaborators {collaborators.length || ""}
               </span>
-              <ScrollArea className="h-[120px] overflow-y-auto w-full rounded-md border border-muted-foreground/20">
+              <ScrollArea className="h-[220px] overflow-y-auto w-full rounded-md border border-muted-foreground/20">
                 {collaborators.length ? (
                   collaborators.map((c) => (
                     <div

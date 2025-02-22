@@ -15,22 +15,26 @@ import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { getUsersFromSearch } from "@/lib/supabase/queries";
+import { getMembersFromSearch, getUsersFromSearch } from "@/lib/supabase/queries";
+import { useAppState } from "@/lib/providers/state-provider";
 
 interface CollaboratorSearchProps {
   existingCollaborators: User[] | [];
   getCollaborator: (collaborator: User) => void;
   children: React.ReactNode;
+  members?:boolean;
 }
 
 const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
   children,
   existingCollaborators,
   getCollaborator,
+  members
 }) => {
   const { user } = useSupabaseUser();
   const [searchResults, setSearchResults] = useState<User[] | []>([]);
   const timeRef = useRef<ReturnType<typeof setTimeout>>();
+  const {workspaceId} = useAppState();
 
   useEffect(() => {
     if (timeRef.current) {
@@ -38,12 +42,23 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
     }
   }, []);
 
+  if(!workspaceId) return;
+
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+   try {
     if (timeRef.current) clearTimeout(timeRef.current);
     timeRef.current = setTimeout(async () => {
+     if(members){
+      const res = await getMembersFromSearch(e.target.value,workspaceId);
+      setSearchResults(res);
+     }else{
       const res = await getUsersFromSearch(e.target.value);
       setSearchResults(res);
+     }
     }, 500);
+   } catch (error) {
+    console.log(error)
+   }
   };
   const addCollaborator = (user: User) => {
     getCollaborator(user);
