@@ -36,7 +36,7 @@ const DatePicker = () => {
           selected={date}
           onSelect={setDate}
           initialFocus
-          className=" z-[1000px]"
+          className="z-50"
         />
       </PopoverContent>
     </Popover>
