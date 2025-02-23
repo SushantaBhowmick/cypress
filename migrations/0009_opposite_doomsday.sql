@@ -1,0 +1,1 @@
+ALTER TABLE "collaborators" ADD COLUMN "workspace_role" text DEFAULT 'employee' NOT NULL;

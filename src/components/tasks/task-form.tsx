@@ -5,8 +5,6 @@ import { Separator } from "../ui/separator";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { Calendar } from "../ui/calendar";
-import DatePicker from "./date-picker";
 import { Button } from "../ui/button";
 import CollaboratorSearch from "../global/collaborator-search";
 import { User } from "@/lib/supabase/supabase-types";

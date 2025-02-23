@@ -125,6 +125,7 @@ export const collaborators = pgTable("collaborators", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+	workspaceRole: text("workspace_role",{enum:["employee","manager","owner"]}).default("employee").notNull(),
 });
 export const dummy = pgTable("dummy", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
@@ -134,7 +135,8 @@ export const dummy = pgTable("dummy", {
     .references(() => workspaces.id, { onDelete: "cascade" }),
   assigned_to:uuid('assigned_to')
   .notNull()
-  .references(()=>collaborators.id,{onDelete:'cascade'})
+  .references(()=>collaborators.id,{onDelete:'cascade'}),
+	role: text("role",{enum:["admin","user"]}).default("user").notNull(),
 });
 
 export const tasks = pgTable("tasks", {
