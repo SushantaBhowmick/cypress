@@ -7,10 +7,24 @@ import { getWorkspaceDetails } from "@/lib/supabase/queries";
 import { Filter, ListCheck, Plus, PlusCircle, PlusIcon } from "lucide-react";
 import CustomDialogTrigger from "../global/custom-dialog-trigger";
 import TaskForm from "./task-form";
+import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import AddTaskTrigger from "./add-task-Trigger";
+
 
 const TaskHeader = async ({ params }: { params: { workspaceId: string } }) => {
   const workspaceId = params?.workspaceId;
   const { data, error } = await getWorkspaceDetails(workspaceId);
+  const supabase = createServerComponentClient({ cookies });
+
+  const {data:{user}} = await supabase.auth.getUser();
+
+  if (!user && !data) return;
+
+  const showToast=()=>{
+
+  }
 
   return (
     <div className="flex flex-col justify-center items-center w-full">
@@ -38,18 +52,7 @@ const TaskHeader = async ({ params }: { params: { workspaceId: string } }) => {
             <h1 className="text-[18px]">Tasks</h1>
           </div>
         </div>
-        <CustomDialogTrigger
-        header="Add Task"
-        description=""
-        content={<TaskForm />}
-        >
-           <div className=" cursor-pointer flex gap-1 items-center text-white bg-primary-purple-400 rounded-md p-2">
-            <span>
-              <Plus />
-            </span>
-            <span className="text-[18px]">Add Task</span>
-          </div>
-        </CustomDialogTrigger>
+       <AddTaskTrigger userId={user?.id} workspaceOwnerId={data[0].workspaceOwner}/>
       </div>
     </div>
   );

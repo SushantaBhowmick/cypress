@@ -28,18 +28,21 @@ export interface Database {
           id: string;
           user_id: string;
           workspace_id: string;
+          workspace_role: string;
         };
         Insert: {
           created_at?: string;
           id?: string;
           user_id: string;
           workspace_id: string;
+          workspace_role: string;
         };
         Update: {
           created_at?: string;
           id?: string;
           user_id?: string;
           workspace_id?: string;
+          workspace_role: string;
         };
         Relationships: [
           {
