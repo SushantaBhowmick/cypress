@@ -31,7 +31,7 @@ const DashboardPage = async () => {
     );
   }
   // if (!workspace) return;
-  // redirect(`/dashboard/${workspace.id}`);
+  redirect(`/dashboard/${workspace.id}`);
 };
 
 export default DashboardPage;
