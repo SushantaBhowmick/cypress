@@ -154,7 +154,7 @@ export const tasks = pgTable("tasks", {
 	title: text("title").notNull(),
 	description: text("description"),
 	status: text("status").default('pending').notNull(),
-	assignedTo: uuid("assigned_to").notNull().references(() => collaborators.id, { onDelete: "cascade" } ),
+	assignedTo: uuid("assigned_to").references(() => collaborators.id, { onDelete: "cascade" } ),
 	createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	dueDate: timestamp("due_date", { withTimezone: true, mode: 'string' }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),

@@ -9,6 +9,7 @@ import AppStateProvider from "@/lib/providers/state-provider";
 import { SupabaseUserProvider } from "@/lib/providers/supabase-user-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { SocketProvider } from "@/lib/providers/socket-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const inter = DM_Sans({ subsets: ["latin"] });
 
@@ -23,18 +24,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // const queryClient = new QueryClient();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={twMerge("bg-background", inter.className)}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <AppStateProvider>
-            <SupabaseUserProvider>
-              <SocketProvider>
-                {children}
-                <Toaster />
-              </SocketProvider>
-            </SupabaseUserProvider>
-          </AppStateProvider>
+          {/* <QueryClientProvider client={queryClient}> */}
+            <AppStateProvider>
+              <SupabaseUserProvider>
+                <SocketProvider>
+                  {children}
+                  <Toaster />
+                </SocketProvider>
+              </SupabaseUserProvider>
+            </AppStateProvider>
+          {/* </QueryClientProvider> */}
         </ThemeProvider>
       </body>
     </html>

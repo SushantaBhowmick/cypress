@@ -1,4 +1,5 @@
-import React from "react";
+'use client'
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,9 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { tasks } from "@/lib/supabase/supabase-types";
+// import { getAllTasks } from "@/lib/supabase/queries";
+// import {useQuery} from '@tanstack/react-query'
 
 const TaskTable = () => {
-  const arr = [1, 2, 3, 4, 5];
+const [tasks,setTasks] = useState<tasks[]>([])
+  // const {data:tasks,isLoading,isError}= useQuery({
+  //   queryKey:['tasks'],
+  //   queryFn:getAllTasks,
+  //   staleTime:5000,
+  // })
+
+
 
   return (
       <Table>
@@ -25,15 +36,15 @@ const TaskTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {arr.map((item,i) => (
+          {tasks && tasks.map((item,i) => (
             <TableRow key={i}>
               <TableCell className="font-medium">{i+1}</TableCell>
               <TableCell>
-                This is the task title that you have asisigned by someone
+                {item.title}
               </TableCell>
-              <TableCell>Pending</TableCell>
-              <TableCell>Sushanta Bhowmick</TableCell>
-              <TableCell className="text-right">25/5/25</TableCell>
+              <TableCell>{item.status}</TableCell>
+              <TableCell>{item.assignedTo}</TableCell>
+              <TableCell className="text-right">{item.dueDate?.toString()}</TableCell>
             </TableRow>
           ))}
         </TableBody>

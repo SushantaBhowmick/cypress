@@ -17,6 +17,14 @@ export const CreateWorkspaceFormSchema = z.object({
   logo: z.any(),
 });
 
+export const taskFormSchema = z.object({
+  title: z
+    .string()
+    .describe("Task Title")
+    .min(1, "Task title must be min of 1 character"),
+  description: z.any(),
+});
+
 export const UploadBannerFormSchema = z.object({
   banner: z.string().describe("Banner Image"),
 });
