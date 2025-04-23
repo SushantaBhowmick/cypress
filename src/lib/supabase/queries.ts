@@ -409,7 +409,7 @@ export const createTask = async (task: tasksTypes) => {
       task.assignedTo = collaboratorExists.id;
       const result = await db.insert(tasks).values(task);
       revalidatePath(`/workspaces/${task.workspaceId}/tasks`);
-      return { data: {result,collaboratorExists}, error: null };
+      return { data: { result, collaboratorExists }, error: null };
     }
   } catch (error) {
     console.log(error);
@@ -419,29 +419,52 @@ export const createTask = async (task: tasksTypes) => {
 
 export const getTaskByWorkspaceId = async (workspaceId: string) => {
   try {
-    if (!workspaceId) return [];
+    // if (!workspaceId) return {data:null,error:"Workspace id not found"};
     const tasksList = await db
       .select({
-        task:tasks,
-        collaborator:collaborators,
-        user:users,
+        task: tasks,
+        collaborator: collaborators,
+        user: users,
       })
       .from(tasks)
       .where(eq(tasks.workspaceId, workspaceId))
       .innerJoin(collaborators, eq(tasks.assignedTo, collaborators.id))
-      .innerJoin(users,eq(collaborators.userId, users.id))
+      .innerJoin(users, eq(collaborators.userId, users.id));
 
-    const nested = tasksList.map((row)=>({
+    const nested = tasksList.map((row) => ({
       ...row.task,
-      collaborator:{
+      collaborator: {
         ...row.collaborator,
-        user:{
-          ...row.user
-        }
-      }
-    }))
+        user: {
+          ...row.user,
+        },
+      },
+    }));
 
     return { data: nested, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: "Error" };
+  }
+};
+
+export const getTaskDetails = async (taskId: string) => {
+  try {
+    // if (!workspaceId) return {data:null,error:"Workspace id not found"};
+    const taskDetails = await db.query.tasks
+      .findFirst({
+        where: (t, { eq }) => eq(t.id, taskId),
+        with:{
+          collaborators:{
+            with:{
+              user:true,
+            }
+          },
+          createdByUser:true,
+        }
+      })
+     
+    return taskDetails;
   } catch (error) {
     console.log(error);
     return { data: [], error: "Error" };
