@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import {Session} from '@supabase/supabase-js'
+import { Session } from "@supabase/supabase-js";
 
 const routes = [
   { title: "Features", href: "#features" },
@@ -66,23 +66,25 @@ const components: { title: string; href: string; description: string }[] = [
 ];
 
 const Header = () => {
-
   const [path, setPath] = useState("#products");
   const [session, setSession] = useState<Session | null>(null);
-  const supabase = createClientComponentClient()
-  const [error, setError] = useState<Error |null>(null);
+  const supabase = createClientComponentClient();
+  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(()=>{
-    async function fetchSession(){
-      const {data:{session},error}= await supabase.auth.getSession();
+  useEffect(() => {
+    async function fetchSession() {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) {
         setError(error);
       } else {
         setSession(session);
       }
     }
-    fetchSession()
-  },[supabase])
+    fetchSession();
+  }, [supabase]);
   return (
     <header className="flex justify-center items-center p-4">
       <Link href={"/"} className="w-full flex gap-2 justify-start items-center">
@@ -128,58 +130,43 @@ const Header = () => {
                     Welcome
                   </span>
                 </li>
-                <ListItem
-                  href="#"
-                  title="Introduction"
-                >
+                <ListItem href="#" title="Introduction">
                   Re-usable components built using Radix UI and Tailwind CSS.
                 </ListItem>
-                <ListItem
-                  href="#"
-                  title="Installation"
-                >
+                <ListItem href="#" title="Installation">
                   How to install dependencies and structure your app.
                 </ListItem>
-                <ListItem
-                  href="#"
-                  title="Typography"
-                >
+                <ListItem href="#" title="Typography">
                   Styles for headings, paragraphs, lists...etc
                 </ListItem>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-          <NavigationMenuTrigger
-              onClick={() => setPath('#pricing')}
+            <NavigationMenuTrigger
+              onClick={() => setPath("#pricing")}
               className={cn({
-                'dark:text-white': path === '#pricing',
-                'dark:text-white/40': path !== '#pricing',
-                'font-normal': true,
-                'text-xl': true,
+                "dark:text-white": path === "#pricing",
+                "dark:text-white/40": path !== "#pricing",
+                "font-normal": true,
+                "text-xl": true,
               })}
             >
               Pricing
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid w-[400px] gap-3 p-4  md:grid-row-2  ">
-                <ListItem
-                  title="Pro Plan"
-                  href={'#'}
-                >
+                <ListItem title="Pro Plan" href={"#"}>
                   Unlock full power with collaboration.
                 </ListItem>
-                <ListItem
-                  title={'free Plan'}
-                  href={'#'}
-                >
+                <ListItem title={"free Plan"} href={"#"}>
                   Great for teams just starting out.
                 </ListItem>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-          <NavigationMenuContent>
+            <NavigationMenuContent>
               <ul
                 className="grid w-[400px]
               gap-3
@@ -202,36 +189,19 @@ const Header = () => {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-              <Link href={"/about"} legacyBehavior passHref>
-          <NavigationMenuLink
-              className={cn(navigationMenuTriggerStyle(), {
-                'dark:text-white': path === '#about',
-                'dark:text-white/40': path !== '#about',
-                'font-normal': true,
-                'text-xl': true,
-              })}
-            >
-              About
-            </NavigationMenuLink>
-              </Link>
+            <Link href={"/about"} legacyBehavior passHref>
+              <NavigationMenuLink
+                className={cn(navigationMenuTriggerStyle(), {
+                  "dark:text-white": path === "#about",
+                  "dark:text-white/40": path !== "#about",
+                  "font-normal": true,
+                  "text-xl": true,
+                })}
+              >
+                About
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
-          {
-            session && 
-            <NavigationMenuItem>
-             <Link href={"/dashboard"} legacyBehavior passHref>
-          <NavigationMenuLink
-              className={cn(navigationMenuTriggerStyle(), {
-                'dark:text-white': path === '#dashboard',
-                'dark:text-white/40': path !== '#dashboard',
-                'font-normal': true,
-                'text-xl': true,
-              })}
-            >
-              Dashboard
-            </NavigationMenuLink>
-             </Link>
-          </NavigationMenuItem>
-          }
         </NavigationMenuList>
       </NavigationMenu>
       <aside
@@ -241,22 +211,26 @@ const Header = () => {
         justify-end
       "
       >
-         <Link href={'/login'}>
-          <Button
-            variant="btn-secondary"
-            className=" p-1 hidden sm:block"
-          >
-            Login
-          </Button>
-        </Link>
-        <Link href="/signup">
-          <Button
-            variant="btn-primary"
-            className="whitespace-nowrap"
-          >
-            Sign Up
-          </Button>
-        </Link>
+        {session ? (
+          <Link href={"/dashboard"} legacyBehavior passHref>
+            <Button variant={"btn-primary"} className="whitespace-nowrap">
+            Dashboard
+            </Button>
+          </Link>
+        ) : (
+          <>
+            <Link href={"/login"}>
+              <Button variant="btn-secondary" className=" p-1 hidden sm:block">
+                Login
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button variant="btn-primary" className="whitespace-nowrap">
+                Sign Up
+              </Button>
+            </Link>
+          </>
+        )}
       </aside>
     </header>
   );

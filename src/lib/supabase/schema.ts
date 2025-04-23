@@ -7,7 +7,12 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { prices, products, subscriptionStatus, users } from "../../../migrations/schema";
+import {
+  prices,
+  products,
+  subscriptionStatus,
+  users,
+} from "../../../migrations/schema";
 import { relations, sql } from "drizzle-orm";
 
 export const workspaces = pgTable("workspaces", {
@@ -51,8 +56,8 @@ export const files = pgTable("files", {
     withTimezone: true,
     mode: "string",
   })
-  .defaultNow()
-  .notNull(),
+    .defaultNow()
+    .notNull(),
   title: text("title").notNull(),
   iconId: text("icon_id").notNull(),
   data: text("data"),
@@ -125,47 +130,47 @@ export const collaborators = pgTable("collaborators", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-	workspaceRole: text("workspace_role",{enum:["employee","manager","owner"]}).default("employee").notNull(),
+  workspaceRole: text("workspace_role", {
+    enum: ["employee", "manager", "owner"],
+  })
+    .default("employee")
+    .notNull(),
 });
 export const dummy = pgTable("dummy", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
-  name:text('name'),
+  name: text("name"),
   workspaceId: uuid("workspace_id")
     .notNull()
     .references(() => workspaces.id, { onDelete: "cascade" }),
-  assigned_to:uuid('assigned_to')
-  .notNull()
-  .references(()=>collaborators.id,{onDelete:'cascade'}),
-	role: text("role",{enum:["admin","user"]}).default("user").notNull(),
+  assigned_to: uuid("assigned_to")
+    .notNull()
+    .references(() => collaborators.id, { onDelete: "cascade" }),
+  role: text("role", { enum: ["admin", "user"] })
+    .default("user")
+    .notNull(),
 });
 
 export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
-  workspaceId: uuid("workspace_id")
-    .notNull()
-    .references(() => workspaces.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   status: text("status").default("pending").notNull(),
-  assignedTo: uuid("assigned_to")
-    .notNull()
-    .references(() => collaborators.id, { onDelete: "cascade" }),
-  createdBy: uuid("created_by")
-    .notNull()
-    .references(() => users.id,{ onDelete: "cascade" }),
+  assignedTo: uuid("assigned_to").notNull().references(() => collaborators.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   dueDate: timestamp("due_date", { withTimezone: true, mode: "string" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
     .defaultNow()
     .notNull(),
 });
 
-export const productsRelations = relations(products,({many})=>({
-  prices:many(prices)
+export const productsRelations = relations(products, ({ many }) => ({
+  prices: many(prices),
 }));
 
-export const priceRelations = relations(prices,({one})=>({
-  product:one(products,{
-    fields:[prices.productId],
-    references:[products.id]
-  })
-}))
+export const priceRelations = relations(prices, ({ one }) => ({
+  product: one(products, {
+    fields: [prices.productId],
+    references: [products.id],
+  }),
+}));

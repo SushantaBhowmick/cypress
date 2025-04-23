@@ -400,30 +400,30 @@ export interface Database {
         Row: {
           title: string | null;
           description: string;
-          status: string | null;
+          status?: string | null;
           id: string;
-          due_date: string | null;
-          assigned_to: string;
+          due_date?: string | null;
+          assigned_to?: string;
           workspace_id: string;
           created_by: string;
         };
         Insert: {
           title: string | null;
           description: string;
-          status: string | null;
+          status?: string | null;
           id: string;
-          due_date: string | null;
-          assigned_to: string;
+          due_date?: string | null;
+          assigned_to?: string;
           workspace_id: string;
           created_by: string;
         };
         Update: {
           title: string | null;
           description: string;
-          status: string | null;
+          status?: string | null;
           id: string;
-          due_date: string | null;
-          assigned_to: string;
+          due_date?: string | null;
+          assigned_to?: string;
           workspace_id: string;
           created_by: string;
         };
