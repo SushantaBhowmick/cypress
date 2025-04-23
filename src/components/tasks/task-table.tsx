@@ -1,4 +1,5 @@
-import React from "react";
+'use client'
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,9 +9,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAppState } from "@/lib/providers/state-provider";
+import { tasks } from "@/lib/supabase/schema";
+import { getTaskByWorkspaceId } from "@/lib/supabase/queries";
+import { useToast } from "@/hooks/use-toast";
 
 const TaskTable = () => {
-  const arr = [1, 2, 3, 4, 5];
+    const { workspaceId } = useAppState();
+    const [taskArr,setTaskArr]=useState<typeof tasks[]>([])
+    const {toast} = useToast()
+
+    useEffect(()=>{
+      const fetchTasks=async()=>{
+        if(!workspaceId) return;
+        const {data,error}= await getTaskByWorkspaceId(workspaceId)
+        if(data){
+          setTaskArr(data)
+        }
+        if(error){
+          toast({
+            title:"Error",
+            description:"error wile fething tasks"
+          })
+        }
+
+      }
+      fetchTasks()
+    },[])
+  
 
   return (
       <Table>
@@ -25,14 +51,14 @@ const TaskTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {arr.map((item,i) => (
+          {taskArr&& taskArr.map((item,i) => (
             <TableRow key={i}>
               <TableCell className="font-medium">{i+1}</TableCell>
               <TableCell>
-                This is the task title that you have asisigned by someone
+                {item?.title}
               </TableCell>
-              <TableCell>Pending</TableCell>
-              <TableCell>Sushanta Bhowmick</TableCell>
+              <TableCell>{item.status}</TableCell>
+              <TableCell>{item.collaborator.user.email}</TableCell>
               <TableCell className="text-right">25/5/25</TableCell>
             </TableRow>
           ))}

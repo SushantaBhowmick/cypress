@@ -2,10 +2,19 @@
 
 import { validate } from "uuid";
 import db from "./db";
-import { Subscription, workspace, File, Folder, User, Price } from "./supabase-types";
+import {
+  Subscription,
+  workspace,
+  File,
+  Folder,
+  User,
+  Price,
+  tasks as tasksTypes,
+} from "./supabase-types";
 import { files, workspaces, folders, users } from "../../../migrations/schema";
 import { and, eq, ilike, notExists } from "drizzle-orm";
-import { collaborators } from "./schema";
+import { collaborators, tasks } from "./schema";
+import { revalidatePath } from "next/cache";
 
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
@@ -342,24 +351,27 @@ export const getUsersFromSearch = async (email: string) => {
   return accounts;
 };
 
-export const getMembersFromSearch = async (email: string,w_spaceId:string) => {
+export const getMembersFromSearch = async (
+  email: string,
+  w_spaceId: string
+) => {
   if (!email) return [];
   const members = db
     .select({
-      id:users.id,
-      fullName:users.fullName,
-      avatarUrl:users.avatarUrl,
-      email:users.email,
-      billingAddress:users.billingAddress,
-      paymentMethod:users.paymentMethod,
-      updatedAt:users.updatedAt,
+      id: users.id,
+      fullName: users.fullName,
+      avatarUrl: users.avatarUrl,
+      email: users.email,
+      billingAddress: users.billingAddress,
+      paymentMethod: users.paymentMethod,
+      updatedAt: users.updatedAt,
     })
     .from(collaborators)
-    .innerJoin(users, eq(collaborators.userId,users.id))
+    .innerJoin(users, eq(collaborators.userId, users.id))
     .where(
       and(
-        eq(collaborators.workspaceId,w_spaceId),
-        ilike(users.email, `${email}%`),
+        eq(collaborators.workspaceId, w_spaceId),
+        ilike(users.email, `${email}%`)
       )
     );
   return members;
@@ -380,5 +392,58 @@ export const getActiveProductsWithPrice = async () => {
   } catch (error) {
     console.log(error);
     return { data: [], error };
+  }
+};
+
+export const createTask = async (task: tasksTypes) => {
+  try {
+    const collaboratorExists = await db.query.collaborators.findFirst({
+      where: (c, { eq }) =>
+        and(eq(c.workspaceId, task.workspaceId), eq(c.userId, task.assignedTo)),
+    });
+
+    if (!collaboratorExists) {
+      console.log("collaborator not found");
+      return { data: null, error: "Collaborator not found" };
+    } else {
+      task.assignedTo = collaboratorExists.id;
+      const result = await db.insert(tasks).values(task);
+      revalidatePath(`/workspaces/${task.workspaceId}/tasks`);
+      return { data: {result,collaboratorExists}, error: null };
+    }
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const getTaskByWorkspaceId = async (workspaceId: string) => {
+  try {
+    if (!workspaceId) return [];
+    const tasksList = await db
+      .select({
+        task:tasks,
+        collaborator:collaborators,
+        user:users,
+      })
+      .from(tasks)
+      .where(eq(tasks.workspaceId, workspaceId))
+      .innerJoin(collaborators, eq(tasks.assignedTo, collaborators.id))
+      .innerJoin(users,eq(collaborators.userId, users.id))
+
+    const nested = tasksList.map((row)=>({
+      ...row.task,
+      collaborator:{
+        ...row.collaborator,
+        user:{
+          ...row.user
+        }
+      }
+    }))
+
+    return { data: nested, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: "Error" };
   }
 };
