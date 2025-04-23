@@ -4,7 +4,7 @@ import { render } from "@react-email/components";
 import WelComeTemplate from "@/components/emails/email";
 import nodeMailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 // export const sendMailWithResend = async ({
 //   email,
