@@ -9,7 +9,7 @@ import {
   users,
   workspaces,
 } from '../../../migrations/schema';
-import { files } from './schema';
+import { collaborators, files } from './schema';
 
 export type Json =
   | string
@@ -462,6 +462,7 @@ export type Product = InferSelectModel<typeof products>;
 export type Price = InferSelectModel<typeof prices> & { products?: Product };
 export type Customer = InferSelectModel<typeof customers>;
 export type tasks = InferSelectModel<typeof tasks>;
+export type collaborators = InferSelectModel<typeof collaborators>
 export type Subscription = InferSelectModel<typeof subscriptions> & {
   prices: Price;
 };

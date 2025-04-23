@@ -171,3 +171,23 @@ export const priceRelations = relations(prices, ({ one }) => ({
 	references: [products.id],
   }),
 }));
+
+
+export const taskRelations = relations(tasks,({one})=>({
+  collaborators:one(collaborators,{
+	fields:[tasks.assignedTo],
+	references:[collaborators.id]
+  }),
+  createdByUser:one(users,{
+	fields:[tasks.createdBy],
+	references:[users.id]
+  })
+}))
+
+export const collaboratorRelations = relations(collaborators,({many,one})=>({
+  tasks:many(tasks),
+  user:one(users,{
+	fields:[collaborators.userId],
+	references:[users.id]
+  })
+}))
