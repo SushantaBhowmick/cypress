@@ -289,7 +289,6 @@ export const updateFolder = async (
     await db.update(folders).set(folder).where(eq(folders.id, folderId));
     return { data: null, error: null };
   } catch (error) {
-    console.log(error);
     return { data: null, error: "Error" };
   }
 };
@@ -470,3 +469,36 @@ export const getTaskDetails = async (taskId: string) => {
     return { data: [], error: "Error" };
   }
 };
+
+// update task
+export const updateTask = async (task: Partial<tasksTypes>, taskId: string) => {
+  try {
+    const result = await db
+      .update(tasks)
+      .set(task)
+      .where(eq(tasks.id, taskId));
+    revalidatePath(`/workspaces/${task.workspaceId}/tasks`);
+    return { data: result, error: null };
+  } catch (error) {
+    console.log("error",error);
+    return { data: null, error: error };
+  }
+};
+
+
+// get collaborators by workspaceId
+
+export const getCollaboratorsByWorkspaceId = async (workspaceId: string) => {
+  try {
+    const collaboratorsList = await db.query.collaborators.findMany({
+      where:(c,{eq})=>eq(c.workspaceId,workspaceId),
+      with:{
+        user:true
+      }
+    })
+    return { data: collaboratorsList, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: "Error" };
+  }
+}

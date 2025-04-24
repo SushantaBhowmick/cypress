@@ -24,6 +24,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { createWorkspace } from "@/lib/supabase/queries";
 import { useAppState } from "@/lib/providers/state-provider";
 import { useRouter } from "next/navigation";
+import { useLoader } from "@/lib/providers/loader-provider";
 
 interface DashboardSetupProps {
   user: AuthUser;
@@ -38,6 +39,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   const supabase = createClientComponentClient();
   const {dispatch} = useAppState();
   const router = useRouter();
+  const {setLoading} = useLoader()
 
   const {
     register,
@@ -55,6 +57,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   const onSubmit: SubmitHandler<
     z.infer<typeof CreateWorkspaceFormSchema>
   > = async (value) => {
+    setLoading(true)
     const file = value.logo?.[0];
     let filePath = null;
     const workspaceUUID = v4();
@@ -72,6 +75,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         if (error) throw new Error("");
         filePath = data.path;
       } catch (error) {
+        setLoading(false)
         console.log("Error", error);
       }
     }
@@ -98,9 +102,10 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         payload:{...newWorkspace,folders:[]}
       });
       
-
+      setLoading(false)
       router.replace(`/dashboard/${newWorkspace.id}`)
     } catch (error) {
+      setLoading(false)
       console.log("Error", error);
     } finally {
       reset();

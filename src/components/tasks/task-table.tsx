@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,9 +10,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAppState } from "@/lib/providers/state-provider";
-import { getTaskByWorkspaceId } from "@/lib/supabase/queries";
+import {
+  getCollaboratorsByWorkspaceId,
+  getTaskByWorkspaceId,
+  updateTask,
+} from "@/lib/supabase/queries";
 import { useToast } from "@/hooks/use-toast";
-import { tasks } from "@/lib/supabase/supabase-types";
+import { collaborators, tasks, User } from "@/lib/supabase/supabase-types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,22 +26,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { Button } from "../ui/button";
+import { useLoader } from "@/lib/providers/loader-provider";
+import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
 interface TaskProps extends tasks {
   collaborator: any;
 }
+
+interface CollaboratorsProps extends collaborators {
+  user: User;
+}
+
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 const statusColorMap: Record<string, string> = {
@@ -53,46 +63,187 @@ const TaskTable = () => {
   const { workspaceId } = useAppState();
   const [taskArr, setTaskArr] = useState<TaskProps[] | []>([]);
   const { toast } = useToast();
+  const { setLoading } = useLoader();
+  const [collaborators, setCollaborators] = useState<CollaboratorsProps[]>([]);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!workspaceId) return;
-      const { data, error } = await getTaskByWorkspaceId(workspaceId);
-      if (data?.length) setTaskArr(data);
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Error while fetching tasks",
-        });
-      }
-    };
-    fetchTasks();
-  }, []);
+  const debounceRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const debounceDateRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   const handleTitleChange = (index: number, newTitle: string) => {
     const updated = [...taskArr];
     updated[index].title = newTitle;
+    const taskId = updated[index].id;
     setTaskArr(updated);
-    // Optionally call API here to save
+
+    // clear the existing timeout for this task
+    if (debounceRef.current[taskId]) {
+      clearTimeout(debounceRef.current[taskId]);
+    }
+
+    //set a new debounce timer
+    debounceRef.current[taskId] = setTimeout(async () => {
+      setLoading(true);
+      const { data, error } = await updateTask({ title: newTitle }, taskId);
+      if (data) {
+        setLoading(false);
+        toast({
+          title: "Success",
+          description: "Task updated successfully",
+        });
+      }
+      if (error) {
+        setLoading(false);
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Failed to update title",
+        });
+      }
+    }, 1000);
   };
 
-  const handleStatusChange = (index: number, newStatus: string) => {
+  const handleStatusChange = async (index: number, newStatus: string) => {
+    setLoading(true);
     const updated = [...taskArr];
+    const prevStatus = updated[index].status;
     updated[index].status = newStatus;
     setTaskArr(updated);
-    // Optionally call API here to save
+    let task = {
+      status: newStatus,
+    };
+
+    const { data, error } = await updateTask(task, updated[index].id);
+
+    if (data) {
+      setLoading(false);
+      toast({
+        title: "Success",
+        description: `Status updated to ${newStatus}`,
+      });
+    }
+    if (error) {
+      setLoading(false);
+      updated[index].status = prevStatus;
+      setTaskArr([...updated]);
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Failed to update status",
+      });
+    }
   };
 
   const handleDateChange = (index: number, date: Date) => {
     const updated = [...taskArr];
     updated[index].dueDate = date.toString(); // assumes your schema supports Date
     setTaskArr(updated);
-    // Optionally call API here to save
+    const taskId = updated[index].id;
+
+    // clear the existing timeout for this task
+    if (debounceDateRef.current[taskId]) {
+      clearTimeout(debounceDateRef.current[taskId]);
+    }
+
+    // set a new debounce timer
+    debounceDateRef.current[taskId] = setTimeout(async () => {
+      setLoading(true);
+      const { data, error } = await updateTask(
+        { dueDate: date.toString() },
+        taskId
+      );
+
+      if (data) {
+        setLoading(false);
+        toast({
+          title: "Success",
+          description: "Due date updated successfully",
+        });
+      }
+      if (error) {
+        setLoading(false);
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Failed to update due date",
+        });
+      }
+    }, 500);
   };
 
-  const [showStatusBar, setShowStatusBar] = React.useState<Checked>(true);
-  const [showActivityBar, setShowActivityBar] = React.useState<Checked>(false);
-  const [showPanel, setShowPanel] = React.useState<Checked>(false);
+  const handleAssignToChange=async(index:number,col:CollaboratorsProps)=>{
+    console.log("called")
+    setLoading(true);
+    const updated = [...taskArr];
+    updated[index].assignedTo = col.id;
+    updated[index].collaborator.user.email = col.user.email;
+    const taskId = updated[0].id;
+    const prevAssignedTo = updated[0].assignedTo;
+    setTaskArr(updated);
+    const {data,error} = await updateTask({assignedTo:col.id},taskId)
+    if(data){
+      setLoading(false)
+      toast({
+        title: "Success",
+        description: "Assigned to updated successfully",
+      });
+    }
+    if(error){
+      updated[index].assignedTo = prevAssignedTo;
+      updated[index].collaborator.user.email = col.user.email;
+      setTaskArr(updated);        
+      setLoading(false)
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Failed to assigned",
+      });
+    }
+
+  }
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!workspaceId) return;
+      setLoading(true);
+      const { data, error } = await getTaskByWorkspaceId(workspaceId);
+      if (data?.length) {
+        setTaskArr(data);
+        setLoading(false);
+      }
+      if (error) {
+        setLoading(false);
+        toast({
+          title: "Error",
+          description: "Error while fetching tasks",
+        });
+      }
+    };
+
+    const fetchCollaborators = async () => {
+      if (!workspaceId) return;
+      setLoading(true);
+      const { data, error } = await getCollaboratorsByWorkspaceId(workspaceId);
+      if (data?.length) {
+        setCollaborators(data as CollaboratorsProps[]);
+        setLoading(false);
+      }
+      if (error) {
+        setLoading(false);
+        toast({
+          title: "Error",
+          description: "Error while fetching collaborators",
+        });
+      }
+    };
+    fetchCollaborators();
+    fetchTasks();
+
+    // Cleanup function to clear any pending timeouts
+    return () => {
+      Object.values(debounceRef.current).forEach(clearTimeout);
+      Object.values(debounceDateRef.current).forEach(clearTimeout);
+    };
+  }, [workspaceId, toast, setLoading]);
 
   return (
     <Table>
@@ -101,8 +252,8 @@ const TaskTable = () => {
         <TableRow>
           <TableHead>Sl</TableHead>
           <TableHead>Title</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Assigned to</TableHead>
+          <TableHead className="text-center">Status</TableHead>
+          <TableHead className="text-center">Assigned to</TableHead>
           <TableHead className="text-right">Due Date</TableHead>
           <TableHead className="text-right">Action</TableHead>
         </TableRow>
@@ -119,13 +270,13 @@ const TaskTable = () => {
                   className="w-full"
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className="text-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       color="secondary"
                       variant="ghost"
-                      className="cursor-pointer p-0"
+                      className="cursor-pointer"
                     >
                       <Badge
                         variant="outline"
@@ -143,9 +294,9 @@ const TaskTable = () => {
                       "in qa",
                       "in review",
                       "closed",
-                    ].map((status) => (
+                    ].map((status, i) => (
                       <DropdownMenuItem
-                        key={status}
+                        key={i}
                         onClick={() => handleStatusChange(i, status)}
                       >
                         {status}
@@ -154,7 +305,38 @@ const TaskTable = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
-              <TableCell>{item.collaborator?.user?.email}</TableCell>
+              <TableCell className="text-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      color="secondary"
+                      variant="ghost"
+                      className="cursor-pointer"
+                    >
+                      {item.collaborator?.user?.email}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-76 h-56">
+                    <DropdownMenuLabel>Assign To</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {collaborators &&
+                      collaborators.map((col, index) => (
+                        <div
+                          key={col.id}
+                        >
+                          <DropdownMenuCheckboxItem
+                          className="cursor-pointer py-4"
+                          checked={col.id===item.assignedTo}
+                          onClick={()=>handleAssignToChange(i,col)}
+                        >
+                          {col.user.email ?? col.user.fullName}
+                        </DropdownMenuCheckboxItem>
+                          <DropdownMenuSeparator />
+                        </div>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
               <TableCell className="text-right">
                 <Popover>
                   <PopoverTrigger asChild>
