@@ -171,13 +171,12 @@ const TaskTable = () => {
   };
 
   const handleAssignToChange=async(index:number,col:CollaboratorsProps)=>{
-    console.log("called")
     setLoading(true);
     const updated = [...taskArr];
     updated[index].assignedTo = col.id;
     updated[index].collaborator.user.email = col.user.email;
-    const taskId = updated[0].id;
-    const prevAssignedTo = updated[0].assignedTo;
+    const taskId = updated[index].id;
+    const prevAssignedTo = updated[index].assignedTo;
     setTaskArr(updated);
     const {data,error} = await updateTask({assignedTo:col.id},taskId)
     if(data){
@@ -202,39 +201,6 @@ const TaskTable = () => {
   }
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      if (!workspaceId) return;
-      setLoading(true);
-      const { data, error } = await getTaskByWorkspaceId(workspaceId);
-      if (data?.length) {
-        setTaskArr(data);
-        setLoading(false);
-      }
-      if (error) {
-        setLoading(false);
-        toast({
-          title: "Error",
-          description: "Error while fetching tasks",
-        });
-      }
-    };
-
-    const fetchCollaborators = async () => {
-      if (!workspaceId) return;
-      setLoading(true);
-      const { data, error } = await getCollaboratorsByWorkspaceId(workspaceId);
-      if (data?.length) {
-        setCollaborators(data as CollaboratorsProps[]);
-        setLoading(false);
-      }
-      if (error) {
-        setLoading(false);
-        toast({
-          title: "Error",
-          description: "Error while fetching collaborators",
-        });
-      }
-    };
     fetchCollaborators();
     fetchTasks();
 
@@ -243,7 +209,43 @@ const TaskTable = () => {
       Object.values(debounceRef.current).forEach(clearTimeout);
       Object.values(debounceDateRef.current).forEach(clearTimeout);
     };
-  }, [workspaceId, toast, setLoading]);
+  }, [workspaceId, toast]);
+
+  const fetchTasks = async () => {
+    if (!workspaceId) return;
+
+    setLoading(true);
+    const { data, error } = await getTaskByWorkspaceId(workspaceId);
+    if (data?.length) {
+      setTaskArr(data);
+      setLoading(false);
+    }
+    if (error) {
+      setLoading(false);
+      toast({
+        title: "Error",
+        description: "Error while fetching tasks",
+      });
+    }
+  };
+
+  const fetchCollaborators = async () => {
+    if (!workspaceId) return;
+
+    setLoading(true);
+    const { data, error } = await getCollaboratorsByWorkspaceId(workspaceId);
+    if (data?.length) {
+      setCollaborators(data as CollaboratorsProps[]);
+      setLoading(false);
+    }
+    if (error) {
+      setLoading(false);
+      toast({
+        title: "Error",
+        description: "Error while fetching collaborators",
+      });
+    }
+  };
 
   return (
     <Table>
