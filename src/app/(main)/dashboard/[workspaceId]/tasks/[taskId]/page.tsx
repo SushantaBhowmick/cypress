@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { useLoader } from '@/lib/providers/loader-provider';
 
 interface Collaborator extends collaborators {
     user:User
@@ -20,16 +21,19 @@ interface Task extends tasks{
 const TaskDetailsPage = () => {
     const params = useParams();
     const taskId = params?.taskId;
-    const [task,setTask]=useState<Task | null>(null)
+    const [task,setTask]=useState<Task | null>(null);
+    const {setLoading} = useLoader()
 
     useEffect(()=>{
         async function fetchDetails(){
             if(!taskId) return;
+            setLoading(true)
             const taskDetails = await getTaskDetails(taskId.toString())
             if(taskDetails){
-                console.log(taskDetails)
                 setTask(taskDetails as Task)
+                setLoading(false)
             }else{
+                setLoading(false)
                 console.log("not done")
             }
         }
