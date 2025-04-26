@@ -14,6 +14,7 @@ import CustomDialogTrigger from "../global/custom-dialog-trigger";
 import AvatarUpload from "./AvatarUpload";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { ImageShowing } from "@/lib/hooks/imageShowing";
+import { updateUserById } from "@/lib/supabase/queries";
 // import { updateUserProfile } from "@/lib/supabase/queries"; // You need to implement this
 
 export default function UserProfile({ user }: { user: Partial<User> }) {
@@ -25,7 +26,6 @@ export default function UserProfile({ user }: { user: Partial<User> }) {
   if(!userData.avatarUrl) userData.avatarUrl=''
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(userData)
     const { name, value } = e.target;
     setUserData((prev) => ({
       ...prev,
@@ -34,30 +34,37 @@ export default function UserProfile({ user }: { user: Partial<User> }) {
   };
 
   const handleSave = async () => {
-    // try {
-    //   setIsLoading(true);
-    //   const { error } = await updateUserProfile(userData); // Make sure this API handles Partial<User>
-    //   setIsLoading(false);
-    //   if (error) {
-    //     toast({
-    //       title: "Error",
-    //       description: "Failed to update profile.",
-    //       variant: "destructive",
-    //     });
-    //   } else {
-    //     toast({
-    //       title: "Success",
-    //       description: "Profile updated successfully.",
-    //     });
-    //   }
-    // } catch (err) {
-    //   setIsLoading(false);
-    //   toast({
-    //     title: "Error",
-    //     description: "Something went wrong!",
-    //     variant: "destructive",
-    //   });
-    // }
+    try {
+      if(!userData.id) return;
+      console.log(userData.billingAddress)
+      console.log()
+      setIsLoading(true);
+      let user={
+        fullName:userData.fullName,
+        billingAddress:userData.billingAddress
+      }
+      const { error } = await updateUserById(userData.id,user); // Make sure this API handles Partial<User>
+      setIsLoading(false);
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully.",
+        });
+      }
+    } catch (err) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Something went wrong!",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -101,7 +108,7 @@ export default function UserProfile({ user }: { user: Partial<User> }) {
           />
           <Input
             name="billingAddress"
-            placeholder="Billing Address (JSON)"
+            placeholder="Billing Address"
             value={
               typeof userData.billingAddress === "string"
                 ? userData.billingAddress
