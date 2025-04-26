@@ -37,9 +37,9 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
 }) => {
   const [selectedEmoji, setSelectedEmoji] = useState("💼");
   const supabase = createClientComponentClient();
-  const {dispatch} = useAppState();
+  const { dispatch } = useAppState();
   const router = useRouter();
-  const {setLoading} = useLoader()
+  const { setLoading } = useLoader();
 
   const {
     register,
@@ -57,7 +57,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   const onSubmit: SubmitHandler<
     z.infer<typeof CreateWorkspaceFormSchema>
   > = async (value) => {
-    setLoading(true)
+    setLoading(true);
     const file = value.logo?.[0];
     let filePath = null;
     const workspaceUUID = v4();
@@ -75,8 +75,10 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         if (error) throw new Error("");
         filePath = data.path;
       } catch (error) {
-        setLoading(false)
+        setLoading(false);
         console.log("Error", error);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -93,21 +95,20 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         bannerUrl: "",
       };
 
-      const {data,error:createError}= await createWorkspace(newWorkspace);
-      if(createError){
-        throw new Error()
+      const { data, error: createError } = await createWorkspace(newWorkspace);
+      if (createError) {
+        throw new Error();
       }
       dispatch({
-        type:'ADD_WORKSPACE',
-        payload:{...newWorkspace,folders:[]}
+        type: "ADD_WORKSPACE",
+        payload: { ...newWorkspace, folders: [] },
       });
-      
-      setLoading(false)
-      router.replace(`/dashboard/${newWorkspace.id}`)
+
+      router.replace(`/dashboard/${newWorkspace.id}`);
     } catch (error) {
-      setLoading(false)
       console.log("Error", error);
     } finally {
+      setLoading(false);
       reset();
     }
   };

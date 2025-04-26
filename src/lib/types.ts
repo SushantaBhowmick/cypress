@@ -21,6 +21,10 @@ export const UploadBannerFormSchema = z.object({
   banner: z.string().describe("Banner Image"),
 });
 
+export const UploadAvatarFormSchema = z.object({
+  avatar: z.string().describe("Avatar Image"),
+});
+
 
 export const taskSchema = z.object({
   title: z.string().describe("title").min(1, "Title is required"),

@@ -201,6 +201,54 @@ const TaskTable = () => {
   }
 
   useEffect(() => {
+
+    const fetchTasks = async () => {
+      if (!workspaceId) return;
+      setLoading(true);
+  
+      try {
+        const { data, error } = await getTaskByWorkspaceId(workspaceId);
+  
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Error while fetching tasks",
+          });
+        }
+  
+        if (data) {
+          setTaskArr(data);
+        }
+  
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        toast({
+          title: "Error",
+          description: "Unexpected error while fetching tasks",
+        });
+      } finally {
+        setLoading(false); // always called
+      }
+    };
+  
+    const fetchCollaborators = async () => {
+      if (!workspaceId) return;
+  
+      // setLoading(true);
+      const { data, error } = await getCollaboratorsByWorkspaceId(workspaceId);
+      if (data?.length) {
+        setCollaborators(data as CollaboratorsProps[]);
+        // setLoading(false);
+      }
+      if (error) {
+        // setLoading(false);
+        toast({
+          title: "Error",
+          description: "Error while fetching collaborators",
+        });
+      }
+    };
+
     fetchCollaborators();
     fetchTasks();
 
@@ -211,41 +259,7 @@ const TaskTable = () => {
     };
   }, [workspaceId, toast]);
 
-  const fetchTasks = async () => {
-    if (!workspaceId) return;
-
-    setLoading(true);
-    const { data, error } = await getTaskByWorkspaceId(workspaceId);
-    if (data?.length) {
-      setTaskArr(data);
-      setLoading(false);
-    }
-    if (error) {
-      setLoading(false);
-      toast({
-        title: "Error",
-        description: "Error while fetching tasks",
-      });
-    }
-  };
-
-  const fetchCollaborators = async () => {
-    if (!workspaceId) return;
-
-    setLoading(true);
-    const { data, error } = await getCollaboratorsByWorkspaceId(workspaceId);
-    if (data?.length) {
-      setCollaborators(data as CollaboratorsProps[]);
-      setLoading(false);
-    }
-    if (error) {
-      setLoading(false);
-      toast({
-        title: "Error",
-        description: "Error while fetching collaborators",
-      });
-    }
-  };
+ 
 
   return (
     <Table>

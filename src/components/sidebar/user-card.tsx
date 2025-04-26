@@ -10,6 +10,7 @@ import LogoutButton from "../global/logout-button";
 import ModeToggle from "../global/mode-toggle";
 import Link from "next/link";
 import UserCardToggle from "../userProfile/UserCardToggle";
+import { getUserById } from "@/lib/supabase/queries";
 
 interface UserCardProps {
   subscription: Subscription | null;
@@ -23,9 +24,7 @@ const UserCard: React.FC<UserCardProps> = async ({ subscription }) => {
 
   if (!user) return;
 
-  const response = await db.query.users.findFirst({
-    where: (u, { eq }) => eq(u.id, user.id),
-  });
+  const response = await getUserById(user.id)
 
   let avatarPath;
   if(!response) return;

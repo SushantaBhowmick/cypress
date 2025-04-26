@@ -15,7 +15,6 @@ const AddTaskTrigger: React.FC<AddTaskTriggerProps> = ({
   userId,
   workspaceOwnerId,
 }) => {
-  console.log(userId, workspaceOwnerId);
   const {toast} = useToast();
     const showToast = () => {
         toast({

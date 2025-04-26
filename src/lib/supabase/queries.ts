@@ -355,7 +355,7 @@ export const getMembersFromSearch = async (
   w_spaceId: string
 ) => {
   if (!email) return [];
-  const members = db
+  const members = await db
     .select({
       id: users.id,
       fullName: users.fullName,
@@ -374,6 +374,32 @@ export const getMembersFromSearch = async (
       )
     );
   return members;
+};
+
+export const getUserById = async (userId: string) => {
+  if (!userId) return;
+
+  const user = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, userId),
+  });
+
+  return user;
+};
+
+export const updateUserById = async (
+  userId: string,
+  userData: Partial<User>
+) => {
+  try {
+    const result = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, userId));
+    return { data: result, error: null };
+  } catch (error) {
+    console.log("error", error);
+    return { data: null, error: error };
+  }
 };
 
 export const getActiveProductsWithPrice = async () => {
@@ -450,19 +476,18 @@ export const getTaskByWorkspaceId = async (workspaceId: string) => {
 export const getTaskDetails = async (taskId: string) => {
   try {
     // if (!workspaceId) return {data:null,error:"Workspace id not found"};
-    const taskDetails = await db.query.tasks
-      .findFirst({
-        where: (t, { eq }) => eq(t.id, taskId),
-        with:{
-          collaborators:{
-            with:{
-              user:true,
-            }
+    const taskDetails = await db.query.tasks.findFirst({
+      where: (t, { eq }) => eq(t.id, taskId),
+      with: {
+        collaborators: {
+          with: {
+            user: true,
           },
-          createdByUser:true,
-        }
-      })
-     
+        },
+        createdByUser: true,
+      },
+    });
+
     return taskDetails;
   } catch (error) {
     console.log(error);
@@ -473,32 +498,28 @@ export const getTaskDetails = async (taskId: string) => {
 // update task
 export const updateTask = async (task: Partial<tasksTypes>, taskId: string) => {
   try {
-    const result = await db
-      .update(tasks)
-      .set(task)
-      .where(eq(tasks.id, taskId));
+    const result = await db.update(tasks).set(task).where(eq(tasks.id, taskId));
     revalidatePath(`/workspaces/${task.workspaceId}/tasks`);
     return { data: result, error: null };
   } catch (error) {
-    console.log("error",error);
+    console.log("error", error);
     return { data: null, error: error };
   }
 };
-
 
 // get collaborators by workspaceId
 
 export const getCollaboratorsByWorkspaceId = async (workspaceId: string) => {
   try {
     const collaboratorsList = await db.query.collaborators.findMany({
-      where:(c,{eq})=>eq(c.workspaceId,workspaceId),
-      with:{
-        user:true
-      }
-    })
+      where: (c, { eq }) => eq(c.workspaceId, workspaceId),
+      with: {
+        user: true,
+      },
+    });
     return { data: collaboratorsList, error: null };
   } catch (error) {
     console.log(error);
     return { data: [], error: "Error" };
   }
-}
+};
