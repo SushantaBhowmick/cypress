@@ -479,7 +479,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     quill.on('selection-change',selectionChangeHandler(user.id))
 
     return()=>{
-      quill.off('text-changes',quillHandler)
+      quill.off('text-change',quillHandler)
       quill.off('selection-change',selectionChangeHandler(user.id))
       if(saveTimerRef.current) clearTimeout(saveTimerRef.current);
     }
